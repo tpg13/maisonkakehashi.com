@@ -1,0 +1,565 @@
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+
+export const LANGS = ["en", "fr", "it", "de"] as const;
+export type Lang = (typeof LANGS)[number];
+
+const en = {
+  banner: "Possibility of covering part of your notary fees*",
+  bannerSmall: "*depending on the case",
+  nav: { home: "Home", services: "Services", story: "My story", projects: "Projects", faq: "FAQ", book: "Book a call" },
+  hero: {
+    eyebrow: "Japan Property Consulting",
+    title: "Construction professional, Swiss resident, property owner in Japan",
+    subtitle: "Maison Kakehashi — Japan Property Consulting. Japan is closer than you think.",
+    cta: "Book a call",
+    secondary: "Discover the services",
+    scroll: "Scroll to transform",
+  },
+  projects: {
+    eyebrow: "Your project, your way",
+    title: "Every journey to Japan starts with a different dream",
+    cards: [
+      ["A holiday home for you", "Your retreat in Japan, ready for every stay."],
+      ["A holiday home rented out while you're away", "Enjoy it during your stays, rent it out the rest of the year."],
+      ["Short-term rental investment*", "Tourist rental income, managed locally for you."],
+      ["Long-term rental investment", "Steady rental income, with local management."],
+      ["Relocation or retirement project", "Prepare your new life in Japan, step by step."],
+      ["A base for long stays", "Live Japan several months a year, like at home."],
+    ],
+    note: "*subject to Japanese regulations",
+  },
+  services: {
+    eyebrow: "Services",
+    title: "Clear support, from first search to keys in hand",
+    s1: "Purchase support",
+    step1: "Step 1 — Search & selection",
+    step1Items: ["Understanding your project", "Property search", "Property analysis", "Shortlist"],
+    step2: "Step 2 — Purchase",
+    step2Items: ["Negotiation", "Contracts", "Remote signing", "Help with accounts and tools needed in Japan", "Payment on the day of sale"],
+    pricing: "Pricing by property price",
+    tiers: [["€0 – 10,000", "€1,250"], ["€10,000 – 50,000", "€1,750"], ["Over €50,000", "€2,500"]],
+    payment: "Payment: 35% when the contract is signed, 65% at purchase.",
+    extras: [
+      ["Renovation option", "10% of the works amount (minimum €500)"],
+      ["Introduction to a rental manager", "Free"],
+      ["Actual expenses", "Re-invoiced at cost"],
+    ],
+    calc: "Estimate your fee",
+    calcLabel: "Property price (€)",
+    calcFee: "Support fee",
+    calcDeposit: "At contract (35%)",
+    calcBalance: "At purchase (65%)",
+    s2: "Listing check",
+    s2Title: "Found a house online or on Instagram? Have it checked before you pay.",
+    s2Included: "Included",
+    s2Items: ["Translation", "Key points", "Pitfalls: land, rebuilding rights, year of construction, access, condition", "Risk zones", "Agency reliability"],
+    fixed: "Fixed price",
+    order: "Order a listing check",
+  },
+  form: {
+    name: "Name", email: "Email", link: "Listing link", message: "Message", phone: "Phone (optional)",
+    continue: "Continue to payment", pay: "Pay €45", card: "Card number", expiry: "MM/YY", cvc: "CVC",
+    secure: "Simulated secure checkout — no real payment is taken.",
+    paid: "Thank you! Your listing check is confirmed. You'll receive the report by email within a few days.",
+    send: "Send message", sent: "Thank you — your message has been received. I'll reply shortly.",
+    required: "Please fill in this field correctly.", back: "Back",
+  },
+  story: {
+    eyebrow: "My story",
+    title: "The bridge between you and Japan",
+    kanji: "かけはし — Kakehashi, the bridge",
+    p1: "My name is James Loder. For many years I have been passionate about Japanese culture — its architecture, its craft, its quiet attention to detail.",
+    p2: "I spent my career on construction sites as a crane operator in France, Belgium, Monaco and Switzerland, and worked on many renovation projects. I know how a building is made — and what to look for when it isn't.",
+    p3: "I bought my own house in Kōfu, Yamanashi Prefecture, completely remotely from Switzerland. Everything I learned along the way, I now put at your service.",
+    p4: "Maison Kakehashi is that bridge: between you and Japan, between your project and its reality.",
+    timeline: [
+      ["The passion", "Discovery of Japanese culture, architecture and craftsmanship."],
+      ["The sites", "Crane operator across France, Belgium, Monaco and Switzerland."],
+      ["Renovation", "Hands-on experience on renovation sites."],
+      ["Kōfu", "Purchase of a house in Yamanashi, entirely remotely from Switzerland."],
+      ["Maison Kakehashi", "Helping clients make the same journey, safely."],
+    ],
+  },
+  cases: {
+    eyebrow: "My projects & client projects",
+    title: "Real cases, real houses",
+    items: [
+      ["My house in Kōfu — in progress", "Bought remotely from Switzerland. Renovation underway with local craftsmen, keeping the original cedar structure and opening the house towards Mount Fuji."],
+      ["Rural house — analysed for a client", "A traditional two-storey house in a quiet village. Rebuilding rights and access checked; a hidden land issue was found before any commitment."],
+      ["Townhouse — analysed for a client", "A compact house for long stays. Year of construction, condition and agency reliability reviewed; negotiation brought the price in line."],
+    ],
+    hidden: "Location hidden",
+    different: "Every case is different.",
+  },
+  book: {
+    eyebrow: "Book a call",
+    title: "A 30-minute discovery call",
+    intro: "Tell me about your project. No commitment — just a clear conversation about what is possible.",
+    lunch: "Lunchtime", evening: "Evening",
+    pick: "Choose a slot", selected: "Selected slot", confirm: "Request this slot",
+    confirmed: "Your request has been sent. You'll receive a confirmation by email.",
+    calendly: "Online calendar coming soon — slots shown are a preview.",
+    contact: "Or write to me",
+    tz: "Times shown in Swiss time (CET)",
+  },
+  faq: {
+    eyebrow: "FAQ",
+    title: "Frequently asked questions",
+    items: [
+      ["Can a foreigner buy a house in Japan?", "Yes. Japan places no restrictions on foreigners buying property — you don't need residency or a visa to become an owner."],
+      ["Do I need to travel to Japan to buy?", "No. The whole purchase can be done remotely: visits by video, remote signing and payment. I bought my own house this way from Switzerland."],
+      ["I don't speak Japanese or English. Is that a problem?", "Not at all. I accompany you in French, and translate and explain every document and every exchange with agencies and notaries."],
+      ["How much does a house really cost?", "Some houses are listed for a few thousand euros, but you must add taxes, notary fees, possible renovation and running costs. We look at the full budget together before you commit."],
+      ["How does the support work?", "First a free discovery call. Then search & selection, followed by the purchase itself — negotiation, contracts, signing and payment — with clear fixed fees."],
+    ],
+  },
+  cta: { title: "Japan is closer than you think.", text: "Let's talk about your project in a 30-minute call.", button: "Book a call" },
+  footer: {
+    consultant: "Maison Kakehashi acts as a consultant, not as a real estate agent.",
+    tagline: "Japan Property Consulting",
+    legal: "Legal notice", privacy: "Privacy policy", lang: "Language", rights: "All rights reserved.",
+  },
+  legal: {
+    title: "Legal notice",
+    body: [
+      "Maison Kakehashi — Japan Property Consulting. Publisher: James Loder, Switzerland.",
+      "Maison Kakehashi acts as a consultant, not as a real estate agent. Transactions are concluded between the buyer and the seller through licensed Japanese agencies and notaries.",
+      "Contact: via the booking form on this website.",
+    ],
+  },
+  privacy: {
+    title: "Privacy policy",
+    body: [
+      "Data submitted through the forms (name, email, message, listing link) is used only to answer your request and is never sold.",
+      "You may ask for access, correction or deletion of your data at any time through the contact form.",
+      "This website stores your language preference locally in your browser.",
+    ],
+  },
+};
+
+export type Dict = typeof en;
+
+const fr: Dict = {
+  banner: "Possibilité de prise en charge d'une partie de vos frais de notaire*",
+  bannerSmall: "*selon les cas",
+  nav: { home: "Accueil", services: "Services", story: "Mon histoire", projects: "Projets", faq: "FAQ", book: "Réserver un appel" },
+  hero: {
+    eyebrow: "Conseil immobilier au Japon",
+    title: "Professionnel du bâtiment, résident suisse, propriétaire au Japon",
+    subtitle: "Maison Kakehashi — Japan Property Consulting. Le Japon est plus proche que vous ne le pensez.",
+    cta: "Réserver un appel",
+    secondary: "Découvrir les services",
+    scroll: "Faites défiler pour transformer",
+  },
+  projects: {
+    eyebrow: "Votre projet, à votre façon",
+    title: "Chaque voyage vers le Japon commence par un rêve différent",
+    cards: [
+      ["Une maison de vacances pour vous", "Votre refuge au Japon, prêt à chaque séjour."],
+      ["Une maison de vacances louée en votre absence", "Profitez-en pendant vos séjours, louez-la le reste de l'année."],
+      ["Investissement locatif courte durée*", "Revenus de location touristique, gérés localement pour vous."],
+      ["Investissement locatif longue durée", "Des revenus locatifs réguliers, avec une gestion locale."],
+      ["Projet d'installation ou de retraite", "Préparez votre nouvelle vie au Japon, étape par étape."],
+      ["Un pied-à-terre pour de longs séjours", "Vivez le Japon plusieurs mois par an, comme chez vous."],
+    ],
+    note: "*sous réserve de la réglementation japonaise",
+  },
+  services: {
+    eyebrow: "Services",
+    title: "Un accompagnement clair, de la recherche à la remise des clés",
+    s1: "Accompagnement à l'achat",
+    step1: "Étape 1 — Recherche & sélection",
+    step1Items: ["Compréhension de votre projet", "Recherche de biens", "Analyse des biens", "Short-list"],
+    step2: "Étape 2 — Achat",
+    step2Items: ["Négociation", "Contrats", "Signature à distance", "Aide pour les comptes et outils nécessaires au Japon", "Paiement le jour de la vente"],
+    pricing: "Tarifs selon le prix du bien",
+    tiers: [["0 – 10 000 €", "1 250 €"], ["10 000 – 50 000 €", "1 750 €"], ["Plus de 50 000 €", "2 500 €"]],
+    payment: "Paiement : 35 % à la signature du contrat, 65 % à l'achat.",
+    extras: [
+      ["Option rénovation", "10 % du montant des travaux (minimum 500 €)"],
+      ["Mise en relation avec un gestionnaire locatif", "Offerte"],
+      ["Frais réels", "Refacturés au coût réel"],
+    ],
+    calc: "Estimez vos honoraires",
+    calcLabel: "Prix du bien (€)",
+    calcFee: "Honoraires",
+    calcDeposit: "À la signature (35 %)",
+    calcBalance: "À l'achat (65 %)",
+    s2: "Vérification d'annonce",
+    s2Title: "Vous avez trouvé une maison en ligne ou sur Instagram ? Faites-la vérifier avant de payer.",
+    s2Included: "Inclus",
+    s2Items: ["Traduction", "Points clés", "Pièges : terrain, droit de reconstruction, année de construction, accès, état", "Zones à risque", "Fiabilité de l'agence"],
+    fixed: "Prix fixe",
+    order: "Commander une vérification",
+  },
+  form: {
+    name: "Nom", email: "E-mail", link: "Lien de l'annonce", message: "Message", phone: "Téléphone (facultatif)",
+    continue: "Continuer vers le paiement", pay: "Payer 45 €", card: "Numéro de carte", expiry: "MM/AA", cvc: "CVC",
+    secure: "Paiement sécurisé simulé — aucun paiement réel n'est effectué.",
+    paid: "Merci ! Votre vérification est confirmée. Vous recevrez le rapport par e-mail sous quelques jours.",
+    send: "Envoyer", sent: "Merci — votre message a bien été reçu. Je vous réponds rapidement.",
+    required: "Veuillez remplir ce champ correctement.", back: "Retour",
+  },
+  story: {
+    eyebrow: "Mon histoire",
+    title: "Le pont entre vous et le Japon",
+    kanji: "かけはし — Kakehashi, le pont",
+    p1: "Je m'appelle James Loder. Depuis de nombreuses années, je suis passionné par la culture japonaise — son architecture, son artisanat, son attention silencieuse au détail.",
+    p2: "J'ai fait carrière sur les chantiers comme grutier en France, en Belgique, à Monaco et en Suisse, et j'ai travaillé sur de nombreux chantiers de rénovation. Je sais comment un bâtiment est construit — et ce qu'il faut surveiller quand il l'est mal.",
+    p3: "J'ai acheté ma propre maison à Kōfu, dans la préfecture de Yamanashi, entièrement à distance depuis la Suisse. Tout ce que j'ai appris en chemin, je le mets aujourd'hui à votre service.",
+    p4: "Maison Kakehashi est ce pont : entre vous et le Japon, entre votre projet et sa réalité.",
+    timeline: [
+      ["La passion", "Découverte de la culture, de l'architecture et de l'artisanat japonais."],
+      ["Les chantiers", "Grutier en France, Belgique, Monaco et Suisse."],
+      ["La rénovation", "Expérience de terrain sur des chantiers de rénovation."],
+      ["Kōfu", "Achat d'une maison à Yamanashi, entièrement à distance depuis la Suisse."],
+      ["Maison Kakehashi", "Accompagner mes clients dans le même chemin, en toute sécurité."],
+    ],
+  },
+  cases: {
+    eyebrow: "Mes projets & projets clients",
+    title: "Des cas réels, des maisons réelles",
+    items: [
+      ["Ma maison à Kōfu — en cours", "Achetée à distance depuis la Suisse. Rénovation en cours avec des artisans locaux, en conservant la structure d'origine en cèdre et en ouvrant la maison vers le mont Fuji."],
+      ["Maison rurale — analysée pour un client", "Une maison traditionnelle à étage dans un village calme. Droits de reconstruction et accès vérifiés ; un problème de terrain caché a été détecté avant tout engagement."],
+      ["Maison de ville — analysée pour un client", "Une maison compacte pour de longs séjours. Année de construction, état et fiabilité de l'agence examinés ; la négociation a ramené le prix à sa juste valeur."],
+    ],
+    hidden: "Lieu masqué",
+    different: "Chaque cas est différent.",
+  },
+  book: {
+    eyebrow: "Réserver un appel",
+    title: "Un appel découverte de 30 minutes",
+    intro: "Parlez-moi de votre projet. Sans engagement — simplement un échange clair sur ce qui est possible.",
+    lunch: "Midi", evening: "Soir",
+    pick: "Choisissez un créneau", selected: "Créneau choisi", confirm: "Demander ce créneau",
+    confirmed: "Votre demande a été envoyée. Vous recevrez une confirmation par e-mail.",
+    calendly: "Agenda en ligne bientôt disponible — les créneaux affichés sont un aperçu.",
+    contact: "Ou écrivez-moi",
+    tz: "Heures affichées en heure suisse (CET)",
+  },
+  faq: {
+    eyebrow: "FAQ",
+    title: "Questions fréquentes",
+    items: [
+      ["Un étranger peut-il acheter une maison au Japon ?", "Oui. Le Japon n'impose aucune restriction aux étrangers pour acheter un bien — ni résidence ni visa ne sont nécessaires pour devenir propriétaire."],
+      ["Dois-je me rendre au Japon pour acheter ?", "Non. Tout l'achat peut se faire à distance : visites en vidéo, signature et paiement à distance. J'ai moi-même acheté ma maison ainsi depuis la Suisse."],
+      ["Je ne parle ni japonais ni anglais. Est-ce un problème ?", "Pas du tout. Je vous accompagne en français, je traduis et vous explique chaque document et chaque échange avec les agences et notaires."],
+      ["Combien coûte vraiment une maison ?", "Certaines maisons sont affichées à quelques milliers d'euros, mais il faut ajouter taxes, frais de notaire, rénovation éventuelle et charges. Nous étudions ensemble le budget complet avant tout engagement."],
+      ["Comment se déroule l'accompagnement ?", "D'abord un appel découverte gratuit. Puis recherche & sélection, suivie de l'achat — négociation, contrats, signature et paiement — avec des honoraires fixes et clairs."],
+    ],
+  },
+  cta: { title: "Le Japon est plus proche que vous ne le pensez.", text: "Parlons de votre projet lors d'un appel de 30 minutes.", button: "Réserver un appel" },
+  footer: {
+    consultant: "Maison Kakehashi intervient en tant que consultant, et non en tant qu'agent immobilier.",
+    tagline: "Conseil immobilier au Japon",
+    legal: "Mentions légales", privacy: "Politique de confidentialité", lang: "Langue", rights: "Tous droits réservés.",
+  },
+  legal: {
+    title: "Mentions légales",
+    body: [
+      "Maison Kakehashi — Japan Property Consulting. Éditeur : James Loder, Suisse.",
+      "Maison Kakehashi intervient en tant que consultant, et non en tant qu'agent immobilier. Les transactions sont conclues entre l'acheteur et le vendeur via des agences et notaires japonais agréés.",
+      "Contact : via le formulaire de réservation de ce site.",
+    ],
+  },
+  privacy: {
+    title: "Politique de confidentialité",
+    body: [
+      "Les données transmises via les formulaires (nom, e-mail, message, lien d'annonce) servent uniquement à répondre à votre demande et ne sont jamais vendues.",
+      "Vous pouvez demander l'accès, la rectification ou la suppression de vos données à tout moment via le formulaire de contact.",
+      "Ce site enregistre votre préférence de langue localement dans votre navigateur.",
+    ],
+  },
+};
+
+const it: Dict = {
+  banner: "Possibilità di coprire parte delle spese notarili*",
+  bannerSmall: "*a seconda dei casi",
+  nav: { home: "Home", services: "Servizi", story: "La mia storia", projects: "Progetti", faq: "FAQ", book: "Prenota una chiamata" },
+  hero: {
+    eyebrow: "Consulenza immobiliare in Giappone",
+    title: "Professionista dell'edilizia, residente in Svizzera, proprietario in Giappone",
+    subtitle: "Maison Kakehashi — Japan Property Consulting. Il Giappone è più vicino di quanto pensi.",
+    cta: "Prenota una chiamata",
+    secondary: "Scopri i servizi",
+    scroll: "Scorri per trasformare",
+  },
+  projects: {
+    eyebrow: "Il tuo progetto, a modo tuo",
+    title: "Ogni viaggio verso il Giappone inizia con un sogno diverso",
+    cards: [
+      ["Una casa vacanze per te", "Il tuo rifugio in Giappone, pronto per ogni soggiorno."],
+      ["Una casa vacanze affittata in tua assenza", "Goditela durante i tuoi soggiorni, affittala il resto dell'anno."],
+      ["Investimento in affitti brevi*", "Reddito da affitti turistici, gestito localmente per te."],
+      ["Investimento in affitti lunghi", "Reddito da locazione stabile, con gestione locale."],
+      ["Progetto di trasferimento o pensione", "Prepara la tua nuova vita in Giappone, passo dopo passo."],
+      ["Una base per lunghi soggiorni", "Vivi il Giappone diversi mesi all'anno, come a casa."],
+    ],
+    note: "*soggetto alla normativa giapponese",
+  },
+  services: {
+    eyebrow: "Servizi",
+    title: "Un accompagnamento chiaro, dalla ricerca alla consegna delle chiavi",
+    s1: "Assistenza all'acquisto",
+    step1: "Fase 1 — Ricerca e selezione",
+    step1Items: ["Comprensione del progetto", "Ricerca degli immobili", "Analisi degli immobili", "Shortlist"],
+    step2: "Fase 2 — Acquisto",
+    step2Items: ["Negoziazione", "Contratti", "Firma a distanza", "Aiuto con conti e strumenti necessari in Giappone", "Pagamento il giorno della vendita"],
+    pricing: "Tariffe in base al prezzo dell'immobile",
+    tiers: [["0 – 10.000 €", "1.250 €"], ["10.000 – 50.000 €", "1.750 €"], ["Oltre 50.000 €", "2.500 €"]],
+    payment: "Pagamento: 35% alla firma del contratto, 65% all'acquisto.",
+    extras: [
+      ["Opzione ristrutturazione", "10% dell'importo dei lavori (minimo 500 €)"],
+      ["Presentazione a un gestore degli affitti", "Gratuita"],
+      ["Spese effettive", "Rifatturate al costo"],
+    ],
+    calc: "Stima il tuo onorario",
+    calcLabel: "Prezzo dell'immobile (€)",
+    calcFee: "Onorario",
+    calcDeposit: "Alla firma (35%)",
+    calcBalance: "All'acquisto (65%)",
+    s2: "Verifica dell'annuncio",
+    s2Title: "Hai trovato una casa online o su Instagram? Falla verificare prima di pagare.",
+    s2Included: "Incluso",
+    s2Items: ["Traduzione", "Punti chiave", "Insidie: terreno, diritto di ricostruzione, anno di costruzione, accesso, stato", "Zone a rischio", "Affidabilità dell'agenzia"],
+    fixed: "Prezzo fisso",
+    order: "Ordina una verifica",
+  },
+  form: {
+    name: "Nome", email: "E-mail", link: "Link dell'annuncio", message: "Messaggio", phone: "Telefono (facoltativo)",
+    continue: "Procedi al pagamento", pay: "Paga 45 €", card: "Numero di carta", expiry: "MM/AA", cvc: "CVC",
+    secure: "Pagamento sicuro simulato — nessun addebito reale.",
+    paid: "Grazie! La tua verifica è confermata. Riceverai il rapporto via e-mail entro pochi giorni.",
+    send: "Invia messaggio", sent: "Grazie — il tuo messaggio è stato ricevuto. Ti risponderò a breve.",
+    required: "Compila correttamente questo campo.", back: "Indietro",
+  },
+  story: {
+    eyebrow: "La mia storia",
+    title: "Il ponte tra te e il Giappone",
+    kanji: "かけはし — Kakehashi, il ponte",
+    p1: "Mi chiamo James Loder. Da molti anni sono appassionato della cultura giapponese — la sua architettura, il suo artigianato, la sua silenziosa attenzione al dettaglio.",
+    p2: "Ho lavorato nei cantieri come gruista in Francia, Belgio, Monaco e Svizzera, e su numerosi cantieri di ristrutturazione. So come si costruisce un edificio — e cosa controllare quando non è fatto bene.",
+    p3: "Ho acquistato la mia casa a Kōfu, nella prefettura di Yamanashi, completamente a distanza dalla Svizzera. Tutto ciò che ho imparato lungo il percorso, oggi lo metto al tuo servizio.",
+    p4: "Maison Kakehashi è quel ponte: tra te e il Giappone, tra il tuo progetto e la sua realtà.",
+    timeline: [
+      ["La passione", "Scoperta della cultura, dell'architettura e dell'artigianato giapponesi."],
+      ["I cantieri", "Gruista in Francia, Belgio, Monaco e Svizzera."],
+      ["La ristrutturazione", "Esperienza diretta nei cantieri di ristrutturazione."],
+      ["Kōfu", "Acquisto di una casa a Yamanashi, interamente a distanza dalla Svizzera."],
+      ["Maison Kakehashi", "Accompagnare i clienti nello stesso percorso, in sicurezza."],
+    ],
+  },
+  cases: {
+    eyebrow: "I miei progetti & progetti dei clienti",
+    title: "Casi reali, case reali",
+    items: [
+      ["La mia casa a Kōfu — in corso", "Acquistata a distanza dalla Svizzera. Ristrutturazione in corso con artigiani locali, conservando la struttura originale in cedro e aprendo la casa verso il Monte Fuji."],
+      ["Casa rurale — analizzata per un cliente", "Una casa tradizionale a due piani in un villaggio tranquillo. Diritti di ricostruzione e accesso verificati; un problema nascosto sul terreno è emerso prima di ogni impegno."],
+      ["Casa di città — analizzata per un cliente", "Una casa compatta per lunghi soggiorni. Anno di costruzione, stato e affidabilità dell'agenzia esaminati; la negoziazione ha riportato il prezzo al giusto valore."],
+    ],
+    hidden: "Luogo nascosto",
+    different: "Ogni caso è diverso.",
+  },
+  book: {
+    eyebrow: "Prenota una chiamata",
+    title: "Una chiamata conoscitiva di 30 minuti",
+    intro: "Raccontami il tuo progetto. Senza impegno — solo una conversazione chiara su ciò che è possibile.",
+    lunch: "Pranzo", evening: "Sera",
+    pick: "Scegli un orario", selected: "Orario scelto", confirm: "Richiedi questo orario",
+    confirmed: "La tua richiesta è stata inviata. Riceverai una conferma via e-mail.",
+    calendly: "Calendario online in arrivo — gli orari mostrati sono un'anteprima.",
+    contact: "Oppure scrivimi",
+    tz: "Orari in ora svizzera (CET)",
+  },
+  faq: {
+    eyebrow: "FAQ",
+    title: "Domande frequenti",
+    items: [
+      ["Uno straniero può comprare casa in Giappone?", "Sì. Il Giappone non impone restrizioni agli stranieri per l'acquisto di immobili — non servono residenza né visto per diventare proprietario."],
+      ["Devo andare in Giappone per comprare?", "No. L'intero acquisto può avvenire a distanza: visite in video, firma e pagamento a distanza. Io stesso ho comprato casa così dalla Svizzera."],
+      ["Non parlo giapponese né inglese. È un problema?", "Per niente. Ti accompagno, traduco e spiego ogni documento e ogni scambio con agenzie e notai."],
+      ["Quanto costa davvero una casa?", "Alcune case sono in vendita a poche migliaia di euro, ma bisogna aggiungere tasse, spese notarili, eventuale ristrutturazione e costi di gestione. Valutiamo insieme il budget completo prima di impegnarti."],
+      ["Come funziona l'accompagnamento?", "Prima una chiamata conoscitiva gratuita. Poi ricerca e selezione, seguita dall'acquisto — negoziazione, contratti, firma e pagamento — con onorari fissi e chiari."],
+    ],
+  },
+  cta: { title: "Il Giappone è più vicino di quanto pensi.", text: "Parliamo del tuo progetto in una chiamata di 30 minuti.", button: "Prenota una chiamata" },
+  footer: {
+    consultant: "Maison Kakehashi opera come consulente, non come agente immobiliare.",
+    tagline: "Consulenza immobiliare in Giappone",
+    legal: "Note legali", privacy: "Informativa sulla privacy", lang: "Lingua", rights: "Tutti i diritti riservati.",
+  },
+  legal: {
+    title: "Note legali",
+    body: [
+      "Maison Kakehashi — Japan Property Consulting. Editore: James Loder, Svizzera.",
+      "Maison Kakehashi opera come consulente, non come agente immobiliare. Le transazioni sono concluse tra acquirente e venditore tramite agenzie e notai giapponesi autorizzati.",
+      "Contatto: tramite il modulo di prenotazione di questo sito.",
+    ],
+  },
+  privacy: {
+    title: "Informativa sulla privacy",
+    body: [
+      "I dati inviati tramite i moduli (nome, e-mail, messaggio, link dell'annuncio) sono usati solo per rispondere alla tua richiesta e non vengono mai venduti.",
+      "Puoi chiedere in qualsiasi momento l'accesso, la rettifica o la cancellazione dei tuoi dati tramite il modulo di contatto.",
+      "Questo sito memorizza la tua preferenza di lingua localmente nel browser.",
+    ],
+  },
+};
+
+const de: Dict = {
+  banner: "Möglichkeit der Übernahme eines Teils Ihrer Notarkosten*",
+  bannerSmall: "*je nach Fall",
+  nav: { home: "Start", services: "Leistungen", story: "Meine Geschichte", projects: "Projekte", faq: "FAQ", book: "Gespräch buchen" },
+  hero: {
+    eyebrow: "Immobilienberatung in Japan",
+    title: "Bauprofi, wohnhaft in der Schweiz, Immobilienbesitzer in Japan",
+    subtitle: "Maison Kakehashi — Japan Property Consulting. Japan ist näher, als Sie denken.",
+    cta: "Gespräch buchen",
+    secondary: "Leistungen entdecken",
+    scroll: "Scrollen zum Verwandeln",
+  },
+  projects: {
+    eyebrow: "Ihr Projekt, auf Ihre Art",
+    title: "Jede Reise nach Japan beginnt mit einem anderen Traum",
+    cards: [
+      ["Ein Ferienhaus für Sie", "Ihr Rückzugsort in Japan, bereit für jeden Aufenthalt."],
+      ["Ein Ferienhaus, vermietet während Ihrer Abwesenheit", "Genießen Sie es bei Ihren Aufenthalten, vermieten Sie es den Rest des Jahres."],
+      ["Investition in Kurzzeitvermietung*", "Einnahmen aus touristischer Vermietung, lokal für Sie verwaltet."],
+      ["Investition in Langzeitvermietung", "Stabile Mieteinnahmen, mit lokaler Verwaltung."],
+      ["Umzugs- oder Ruhestandsprojekt", "Bereiten Sie Ihr neues Leben in Japan Schritt für Schritt vor."],
+      ["Eine Basis für lange Aufenthalte", "Leben Sie Japan mehrere Monate im Jahr, wie zu Hause."],
+    ],
+    note: "*vorbehaltlich der japanischen Vorschriften",
+  },
+  services: {
+    eyebrow: "Leistungen",
+    title: "Klare Begleitung, von der Suche bis zur Schlüsselübergabe",
+    s1: "Kaufbegleitung",
+    step1: "Schritt 1 — Suche & Auswahl",
+    step1Items: ["Verständnis Ihres Projekts", "Immobiliensuche", "Objektanalyse", "Shortlist"],
+    step2: "Schritt 2 — Kauf",
+    step2Items: ["Verhandlung", "Verträge", "Unterzeichnung aus der Ferne", "Hilfe bei Konten und Tools, die in Japan nötig sind", "Zahlung am Tag des Verkaufs"],
+    pricing: "Preise nach Immobilienpreis",
+    tiers: [["0 – 10.000 €", "1.250 €"], ["10.000 – 50.000 €", "1.750 €"], ["Über 50.000 €", "2.500 €"]],
+    payment: "Zahlung: 35 % bei Vertragsunterzeichnung, 65 % beim Kauf.",
+    extras: [
+      ["Renovierungsoption", "10 % des Bauvolumens (mindestens 500 €)"],
+      ["Vermittlung an einen Mietverwalter", "Kostenlos"],
+      ["Tatsächliche Kosten", "Zum Selbstkostenpreis weiterberechnet"],
+    ],
+    calc: "Honorar schätzen",
+    calcLabel: "Immobilienpreis (€)",
+    calcFee: "Honorar",
+    calcDeposit: "Bei Vertrag (35 %)",
+    calcBalance: "Beim Kauf (65 %)",
+    s2: "Inseratsprüfung",
+    s2Title: "Ein Haus online oder auf Instagram gefunden? Lassen Sie es prüfen, bevor Sie zahlen.",
+    s2Included: "Inklusive",
+    s2Items: ["Übersetzung", "Wichtige Punkte", "Fallstricke: Grundstück, Wiederaufbaurecht, Baujahr, Zugang, Zustand", "Risikozonen", "Seriosität der Agentur"],
+    fixed: "Festpreis",
+    order: "Inseratsprüfung bestellen",
+  },
+  form: {
+    name: "Name", email: "E-Mail", link: "Link zum Inserat", message: "Nachricht", phone: "Telefon (optional)",
+    continue: "Weiter zur Zahlung", pay: "45 € bezahlen", card: "Kartennummer", expiry: "MM/JJ", cvc: "CVC",
+    secure: "Simulierter sicherer Checkout — es wird keine echte Zahlung ausgeführt.",
+    paid: "Vielen Dank! Ihre Inseratsprüfung ist bestätigt. Sie erhalten den Bericht in wenigen Tagen per E-Mail.",
+    send: "Nachricht senden", sent: "Vielen Dank — Ihre Nachricht ist eingegangen. Ich antworte in Kürze.",
+    required: "Bitte füllen Sie dieses Feld korrekt aus.", back: "Zurück",
+  },
+  story: {
+    eyebrow: "Meine Geschichte",
+    title: "Die Brücke zwischen Ihnen und Japan",
+    kanji: "かけはし — Kakehashi, die Brücke",
+    p1: "Mein Name ist James Loder. Seit vielen Jahren begeistere ich mich für die japanische Kultur — ihre Architektur, ihr Handwerk, ihre stille Liebe zum Detail.",
+    p2: "Ich habe auf Baustellen als Kranführer in Frankreich, Belgien, Monaco und der Schweiz gearbeitet und an vielen Renovierungsprojekten mitgewirkt. Ich weiß, wie ein Gebäude entsteht — und worauf man achten muss, wenn nicht.",
+    p3: "Mein eigenes Haus in Kōfu, Präfektur Yamanashi, habe ich vollständig aus der Ferne von der Schweiz aus gekauft. Alles, was ich dabei gelernt habe, stelle ich heute in Ihren Dienst.",
+    p4: "Maison Kakehashi ist diese Brücke: zwischen Ihnen und Japan, zwischen Ihrem Projekt und seiner Wirklichkeit.",
+    timeline: [
+      ["Die Leidenschaft", "Entdeckung der japanischen Kultur, Architektur und Handwerkskunst."],
+      ["Die Baustellen", "Kranführer in Frankreich, Belgien, Monaco und der Schweiz."],
+      ["Renovierung", "Praktische Erfahrung auf Renovierungsbaustellen."],
+      ["Kōfu", "Kauf eines Hauses in Yamanashi, vollständig aus der Ferne aus der Schweiz."],
+      ["Maison Kakehashi", "Kunden sicher auf demselben Weg begleiten."],
+    ],
+  },
+  cases: {
+    eyebrow: "Meine Projekte & Kundenprojekte",
+    title: "Echte Fälle, echte Häuser",
+    items: [
+      ["Mein Haus in Kōfu — in Arbeit", "Aus der Schweiz aus der Ferne gekauft. Renovierung mit lokalen Handwerkern im Gange, unter Erhalt der originalen Zedernstruktur und mit Öffnung zum Fuji."],
+      ["Landhaus — für einen Kunden analysiert", "Ein traditionelles zweistöckiges Haus in einem ruhigen Dorf. Wiederaufbaurecht und Zugang geprüft; ein verstecktes Grundstücksproblem wurde vor jeder Verpflichtung entdeckt."],
+      ["Stadthaus — für einen Kunden analysiert", "Ein kompaktes Haus für lange Aufenthalte. Baujahr, Zustand und Seriosität der Agentur geprüft; die Verhandlung brachte den Preis auf ein faires Niveau."],
+    ],
+    hidden: "Standort verborgen",
+    different: "Jeder Fall ist anders.",
+  },
+  book: {
+    eyebrow: "Gespräch buchen",
+    title: "Ein 30-minütiges Kennenlerngespräch",
+    intro: "Erzählen Sie mir von Ihrem Projekt. Unverbindlich — einfach ein klares Gespräch darüber, was möglich ist.",
+    lunch: "Mittag", evening: "Abend",
+    pick: "Termin wählen", selected: "Gewählter Termin", confirm: "Diesen Termin anfragen",
+    confirmed: "Ihre Anfrage wurde gesendet. Sie erhalten eine Bestätigung per E-Mail.",
+    calendly: "Online-Kalender folgt in Kürze — die angezeigten Termine sind eine Vorschau.",
+    contact: "Oder schreiben Sie mir",
+    tz: "Zeiten in Schweizer Zeit (MEZ)",
+  },
+  faq: {
+    eyebrow: "FAQ",
+    title: "Häufige Fragen",
+    items: [
+      ["Kann ein Ausländer in Japan ein Haus kaufen?", "Ja. Japan schränkt den Immobilienkauf durch Ausländer nicht ein — weder Wohnsitz noch Visum sind nötig, um Eigentümer zu werden."],
+      ["Muss ich für den Kauf nach Japan reisen?", "Nein. Der gesamte Kauf kann aus der Ferne erfolgen: Besichtigungen per Video, Unterzeichnung und Zahlung aus der Ferne. Ich habe mein eigenes Haus so von der Schweiz aus gekauft."],
+      ["Ich spreche weder Japanisch noch Englisch. Ist das ein Problem?", "Überhaupt nicht. Ich begleite Sie, übersetze und erkläre jedes Dokument und jeden Austausch mit Agenturen und Notaren."],
+      ["Was kostet ein Haus wirklich?", "Manche Häuser werden für wenige tausend Euro angeboten, doch hinzu kommen Steuern, Notarkosten, eventuelle Renovierung und laufende Kosten. Wir prüfen gemeinsam das Gesamtbudget, bevor Sie sich verpflichten."],
+      ["Wie funktioniert die Begleitung?", "Zuerst ein kostenloses Kennenlerngespräch. Dann Suche & Auswahl, gefolgt vom Kauf — Verhandlung, Verträge, Unterzeichnung und Zahlung — mit klaren Festhonoraren."],
+    ],
+  },
+  cta: { title: "Japan ist näher, als Sie denken.", text: "Sprechen wir in einem 30-minütigen Gespräch über Ihr Projekt.", button: "Gespräch buchen" },
+  footer: {
+    consultant: "Maison Kakehashi handelt als Berater, nicht als Immobilienmakler.",
+    tagline: "Immobilienberatung in Japan",
+    legal: "Impressum", privacy: "Datenschutz", lang: "Sprache", rights: "Alle Rechte vorbehalten.",
+  },
+  legal: {
+    title: "Impressum",
+    body: [
+      "Maison Kakehashi — Japan Property Consulting. Herausgeber: James Loder, Schweiz.",
+      "Maison Kakehashi handelt als Berater, nicht als Immobilienmakler. Transaktionen werden zwischen Käufer und Verkäufer über zugelassene japanische Agenturen und Notare abgeschlossen.",
+      "Kontakt: über das Buchungsformular dieser Website.",
+    ],
+  },
+  privacy: {
+    title: "Datenschutz",
+    body: [
+      "Über die Formulare übermittelte Daten (Name, E-Mail, Nachricht, Inseratslink) werden nur zur Beantwortung Ihrer Anfrage verwendet und niemals verkauft.",
+      "Sie können jederzeit über das Kontaktformular Auskunft, Berichtigung oder Löschung Ihrer Daten verlangen.",
+      "Diese Website speichert Ihre Sprachwahl lokal in Ihrem Browser.",
+    ],
+  },
+};
+
+export const DICTS: Record<Lang, Dict> = { en, fr, it, de };
+
+type Ctx = { lang: Lang; setLang: (l: Lang) => void; t: Dict };
+const I18nContext = createContext<Ctx>({ lang: "en", setLang: () => {}, t: en });
+
+export function I18nProvider({ children }: { children: ReactNode }) {
+  const [lang, setLangState] = useState<Lang>("en");
+  useEffect(() => {
+    const saved = localStorage.getItem("mk-lang") as Lang | null;
+    if (saved && LANGS.includes(saved)) setLangState(saved);
+  }, []);
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+  const setLang = (l: Lang) => {
+    setLangState(l);
+    localStorage.setItem("mk-lang", l);
+  };
+  return <I18nContext.Provider value={{ lang, setLang, t: DICTS[lang] }}>{children}</I18nContext.Provider>;
+}
+
+export const useI18n = () => useContext(I18nContext);
