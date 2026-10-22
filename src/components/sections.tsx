@@ -117,7 +117,7 @@ export function ProjectCards() {
         </Reveal>
         <div className="mt-16 grid gap-px bg-border md:grid-cols-2 lg:grid-cols-3">
           {t.projects.cards.map(([title, text], i) => {
-            const Icon = cardIcons[i];
+            const Icon = cardIcons[i] ?? Home;
             return (
               <Reveal key={i} delay={i * 80} className="bg-background">
                 <article className="group relative h-full overflow-hidden p-10 transition-colors duration-700 hover:bg-card">
@@ -319,16 +319,16 @@ export function ListingCheck() {
                 </div>
                 <div>
                   <input placeholder={f.card} inputMode="numeric" maxLength={19} value={card.num} onChange={(e) => setCard({ ...card, num: e.target.value.replace(/[^\d ]/g, "") })} className={inputCls} />
-                  {errors.num && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
+                  {errors["num"] && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
                 </div>
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <input placeholder={f.expiry} maxLength={5} value={card.exp} onChange={(e) => setCard({ ...card, exp: e.target.value })} className={inputCls} />
-                    {errors.exp && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
+                    {errors["exp"] && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
                   </div>
                   <div>
                     <input placeholder={f.cvc} inputMode="numeric" maxLength={4} value={card.cvc} onChange={(e) => setCard({ ...card, cvc: e.target.value.replace(/\D/g, "") })} className={inputCls} />
-                    {errors.cvc && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
+                    {errors["cvc"] && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">{f.secure}</p>
@@ -513,7 +513,7 @@ export function BookCall() {
               <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t pt-6">
                 <div>
                   <div className="text-xs uppercase tracking-widest text-muted-foreground">{b.selected}</div>
-                  <div className="font-display text-2xl capitalize">{dayLabel(days[day])} · {slot}</div>
+                  <div className="font-display text-2xl capitalize">{dayLabel(days[day]!)} · {slot}</div>
                 </div>
                 {booked ? (
                   <p className="max-w-xs text-sm text-gold">{b.confirmed}</p>
@@ -541,7 +541,7 @@ export function BookCall() {
                 ))}
                 <div>
                   <textarea name="message" rows={4} maxLength={1000} placeholder={f.message} className="w-full border-b border-washi-foreground/25 bg-transparent py-3 placeholder:text-washi-foreground/50 focus:border-cedar focus:outline-none" />
-                  {errors.message && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
+                  {errors["message"] && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
                 </div>
                 <button className="w-full bg-washi-foreground py-4 text-xs font-semibold uppercase tracking-[0.25em] text-washi">{f.send}</button>
               </form>

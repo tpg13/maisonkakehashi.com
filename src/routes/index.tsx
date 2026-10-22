@@ -32,7 +32,7 @@ function Index() {
           </Reveal>
           <div className="mt-14 grid gap-8 md:grid-cols-2">
             {[
-              [t.services.s1, t.services.step1Items.concat(t.services.step2Items.slice(0, 2)), t.services.tiers[0][1]],
+              [t.services.s1, t.services.step1Items.concat(t.services.step2Items.slice(0, 2)), t.services.tiers[0]![1]],
               [t.services.s2, t.services.s2Items.slice(0, 4), "€45"],
             ].map(([title, items, from], i) => (
               <Reveal key={i} delay={i * 120}>
