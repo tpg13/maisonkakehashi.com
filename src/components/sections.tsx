@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { z } from "zod";
 import { Check, ChevronDown, Home, KeyRound, Plane, Building2, Sunrise, CalendarDays, ArrowDown } from "lucide-react";
-import heroVideo from "@/assets/hero-transformation.mp4.asset.json";
+import heroMp4 from "@/assets/hero-scrub.mp4.asset.json";
+import heroWebm from "@/assets/hero-scrub.webm.asset.json";
 import kofu from "@/assets/kofu-house.jpg";
 import interior from "@/assets/interior.jpg";
 import akiya from "@/assets/akiya.jpg";
@@ -61,13 +62,15 @@ export function HeroVideo() {
       <div className="sticky top-0 h-screen overflow-hidden">
         <video
           ref={video}
-          src={heroVideo.url}
           muted
           playsInline
           preload="auto"
           className="absolute inset-0 h-full w-full object-cover"
           style={{ transform: `scale(${1.08 - progress * 0.08})` }}
-        />
+        >
+          <source src={heroWebm.url} type="video/webm" />
+          <source src={heroMp4.url} type="video/mp4" />
+        </video>
         <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/30 to-background" />
         <div className="absolute inset-0 bg-gradient-to-r from-background/85 via-background/30 to-transparent" />
         <div
