@@ -146,7 +146,7 @@ export function PurchaseSupport() {
   const [price, setPrice] = useState(30000);
   const fee = purchaseFee(price);
   const { deposit, balance } = feeSchedule(fee);
-  const fmt = (n: number) => `€${n.toLocaleString("en-US")}`;
+  const fmt = (n: number) => `€${n.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: n % 1 ? 2 : 0 })}`;
   return (
     <section className="px-6 py-24">
       <div className="mx-auto max-w-7xl">
