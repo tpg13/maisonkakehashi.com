@@ -1,0 +1,31 @@
+{
+  "id": "yamanashi-modern-renewal",
+  "title": "Yamanashi Modern Renewal Residence",
+  "japaneseTitle": "山梨市・現代再生モダン住宅",
+  "price": "€125,000",
+  "priceEur": "€125,000",
+  "priceEurAmount": 125000,
+  "priceJpy": "¥20,000,000",
+  "location": "Yamanashi City, Yamanashi Prefecture",
+  "region": "Chubu / Yamanashi",
+  "coordinates": [138.6865, 35.6908],
+  "type": "Renewal House Modern Style",
+  "status": "2026 Project",
+  "landArea": "300 m²",
+  "floorArea": "200 m²",
+  "yearBuilt": "2026",
+  "features": [
+    "Modern Architectural Renewal",
+    "Rooftop Garden Terrace",
+    "Japanese Zen Water Feature",
+    "Charred Cedar (Yakisugi) Facade",
+    "Expansive Glazing & Concrete Pavers",
+    "Complete Ground-Up Rebirth"
+  ],
+  "description": "A renewal house modern style in Yamanashi. Designed as a complete transformation from an aged akiya into an avant-garde Japanese residence featuring charred cedar siding, glass canopy entryway, modern landscaping with reflective stone pond, and green roof terrace.",
+  "images": [
+    "01-modern-renewal.jpg",
+    "02-cleared-site.jpg",
+    "03-original-akiya.jpg"
+  ]
+}

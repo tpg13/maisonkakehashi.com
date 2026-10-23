@@ -1,0 +1,23 @@
+{
+  "id": "kofu-house",
+  "title": "Kōfu Mountain View Kominka",
+  "japaneseTitle": "甲府・富士見の古民家",
+  "price": "¥16,800,000",
+  "priceEur": "€105,000",
+  "location": "Kōfu, Yamanashi Prefecture",
+  "region": "Chubu / Yamanashi",
+  "coordinates": [138.5683, 35.6639],
+  "type": "Traditional Kominka",
+  "status": "Available",
+  "landArea": "520 m²",
+  "floorArea": "142 m²",
+  "yearBuilt": "1978 (Renovated 2023)",
+  "features": [
+    "Mt. Fuji Panoramas",
+    "Preserved Cedar Beams",
+    "Modern Kitchen & Bath",
+    "2-Car Parking",
+    "Private Japanese Garden"
+  ],
+  "description": "A stunning traditional residence set against the Southern Alps with clear views toward Mt. Fuji. Completely seismically evaluated with authentic cedar timber framing and newly insulated living spaces."
+}

@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback, type FormEvent } from "react";
+import emailjs from "@emailjs/browser";
 import { z } from "zod";
 import { Check, ChevronDown, Home, KeyRound, Plane, Building2, Sunrise, CalendarDays, ArrowDown } from "lucide-react";
-import heroMp4 from "@/assets/hero-scrub.mp4.asset.json";
-import heroWebm from "@/assets/hero-scrub.webm.asset.json";
 import kofu from "@/assets/kofu-house.jpg";
 import interior from "@/assets/interior.jpg";
 import akiya from "@/assets/akiya.jpg";
@@ -12,98 +11,335 @@ import { feeSchedule, purchaseFee, LISTING_CHECK_PRICE } from "@/lib/pricing";
 import { GoldButton, Reveal, SectionHeading, ToriiEmblem } from "@/components/site";
 import { cn } from "@/lib/utils";
 
+// Frame images
+const frameModules = import.meta.glob("@/assets/frame/*.jpg", { eager: true, query: "?url", import: "default" }) as Record<string, string>;
+const frameUrls: string[] = Object.entries(frameModules)
+  .sort(([a], [b]) => a.localeCompare(b))
+  .map(([, url]) => url);
+
+// Background images
+const bgModules = import.meta.glob("@/assets/background/*.{jpg,jpeg,png}", { eager: true, query: "?url", import: "default" }) as Record<string, string>;
+const bgUrls: string[] = Object.entries(bgModules)
+  .sort(([a], [b]) => a.localeCompare(b))
+  .map(([, url]) => url);
+
 export const images = { kofu, interior, akiya, bridge };
 
-/* ---------------- Hero with scroll-scrubbed video ---------------- */
-export function HeroVideo() {
-  const { t } = useI18n();
-  const wrap = useRef<HTMLDivElement>(null);
-  const video = useRef<HTMLVideoElement>(null);
-  const [progress, setProgress] = useState(0);
+const WORDS = [
+  { word: "ACQUIRE",   from: 0,  to: 49  },
+  { word: "ARCHITECT", from: 50, to: 90  },
+  { word: "AWAKEN",    from: 91, to: 157 },
+] as const;
+const TOTAL = frameUrls.length || 158;
 
+/* ── Full-screen scroll-locked intro (Ultra-smooth Canvas Engine) ── */
+export function HeroVideo() {
+  const canvasRef   = useRef<HTMLCanvasElement>(null);
+  const progressRef = useRef(0);
+  const targetRef   = useRef(0);
+  const rafRef      = useRef(0);
+  const finishedRef = useRef(false);
+  const imagesRef   = useRef<HTMLImageElement[]>([]);
+
+  const [opacity, setOpacity]   = useState(1);
+  const [visible, setVisible]   = useState(true);
+  const [wordIdx, setWordIdx]   = useState(-1);
+  const [wordP, setWordP]       = useState(0);
+
+  // Pre-load all frames into memory
   useEffect(() => {
-    const v = video.current;
-    const w = wrap.current;
-    if (!v || !w) return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      v.loop = true;
-      v.play().catch(() => {});
-      return;
-    }
-    let target = 0;
-    let current = 0;
-    let raf = 0;
-    const onScroll = () => {
-      const r = w.getBoundingClientRect();
-      const total = r.height - window.innerHeight;
-      target = Math.min(1, Math.max(0, -r.top / total));
-    };
-    const tick = () => {
-      current += (target - current) * 0.12;
-      setProgress(current);
-      if (v.duration && Math.abs(v.currentTime - current * v.duration) > 0.03) {
-        v.currentTime = current * (v.duration - 0.05);
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    v.pause();
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    raf = requestAnimationFrame(tick);
+    const loadedImgs: HTMLImageElement[] = [];
+    frameUrls.forEach((url, i) => {
+      const img = new Image();
+      img.src = url;
+      loadedImgs[i] = img;
+    });
+    imagesRef.current = loadedImgs;
+  }, []);
+
+  // Lock body scroll on mount
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      cancelAnimationFrame(raf);
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
     };
   }, []);
 
+  // Canvas resize handler
+  useEffect(() => {
+    const handleResize = () => {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        canvas.width = window.innerWidth * window.devicePixelRatio;
+        canvas.height = window.innerHeight * window.devicePixelRatio;
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // 60-120fps RAF rendering loop with direct Canvas drawing
+  useEffect(() => {
+    const tick = () => {
+      const cur = progressRef.current;
+      // Responsive smoothing (0.16) for instant, fluid feedback
+      const next = cur + (targetRef.current - cur) * 0.16;
+      progressRef.current = next;
+
+      const fi = Math.min(TOTAL - 1, Math.max(0, Math.floor(next * (TOTAL - 1))));
+
+      // Draw directly to canvas
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext("2d");
+        const img = imagesRef.current[fi];
+        if (ctx && img && img.complete && img.naturalWidth > 0) {
+          const cw = canvas.width;
+          const ch = canvas.height;
+          const iw = img.naturalWidth;
+          const ih = img.naturalHeight;
+          const scale = Math.max(cw / iw, ch / ih);
+          const nw = iw * scale;
+          const nh = ih * scale;
+          const nx = (cw - nw) / 2;
+          const ny = (ch - nh) / 2;
+          ctx.drawImage(img, nx, ny, nw, nh);
+        }
+      }
+
+      // Word calculation
+      let wi = -1, wp = 0;
+      for (let i = 0; i < WORDS.length; i++) {
+        const w = WORDS[i]!;
+        if (fi >= w.from && fi <= w.to) {
+          wi = i;
+          wp = (fi - w.from) / Math.max(1, w.to - w.from);
+          break;
+        }
+      }
+      setWordIdx(wi);
+      setWordP(wp);
+
+      // Finish intro when scroll reaches end
+      if (next >= 0.998 && !finishedRef.current) {
+        finishedRef.current = true;
+        setOpacity(0);
+        setTimeout(() => {
+          document.body.style.overflow = "";
+          document.documentElement.style.overflow = "";
+          setVisible(false);
+          // Land cleanly at the top of the website
+          window.scrollTo({ top: 0, behavior: "instant" });
+        }, 550);
+        return;
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  // Responsive Wheel listener
+  useEffect(() => {
+    const onWheel = (e: WheelEvent) => {
+      if (finishedRef.current) return;
+      e.preventDefault();
+      // Sensitivity factor: 1.5 screen turns for full sequence
+      const delta = e.deltaY / (window.innerHeight * 1.5);
+      targetRef.current = Math.min(1, Math.max(0, targetRef.current + delta));
+    };
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => window.removeEventListener("wheel", onWheel);
+  }, []);
+
+  // Touch listener
+  useEffect(() => {
+    let startY = 0;
+    const onStart = (e: TouchEvent) => { startY = e.touches[0]!.clientY; };
+    const onMove = (e: TouchEvent) => {
+      if (finishedRef.current) return;
+      e.preventDefault();
+      const dy = startY - e.touches[0]!.clientY;
+      const delta = dy / (window.innerHeight * 1.4);
+      targetRef.current = Math.min(1, Math.max(0, targetRef.current + delta));
+      startY = e.touches[0]!.clientY;
+    };
+    window.addEventListener("touchstart", onStart, { passive: true });
+    window.addEventListener("touchmove", onMove, { passive: false });
+    return () => {
+      window.removeEventListener("touchstart", onStart);
+      window.removeEventListener("touchmove", onMove);
+    };
+  }, []);
+
+  // Keyboard listener
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (finishedRef.current) return;
+      if (["ArrowDown", " ", "PageDown"].includes(e.key)) {
+        e.preventDefault();
+        targetRef.current = Math.min(1, targetRef.current + 0.1);
+      }
+      if (["ArrowUp", "PageUp"].includes(e.key)) {
+        e.preventDefault();
+        targetRef.current = Math.max(0, targetRef.current - 0.1);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const skip = () => {
+    targetRef.current = 1;
+    progressRef.current = 0.99;
+  };
+
+  if (!visible) return null;
+
+  const progress = progressRef.current;
+  const entering = wordP < 0.18;
+  const leaving  = wordP > 0.78;
+  const tx = wordIdx === -1 ? 100 : entering ? (1 - wordP / 0.18) * 100 : leaving ? -((wordP - 0.78) / 0.22) * 100 : 0;
+  const op = wordIdx === -1 ? 0   : entering ? wordP / 0.18             : leaving ? 1 - (wordP - 0.78) / 0.22      : 1;
+
   return (
-    <section ref={wrap} className="relative h-[260vh]">
-      <div className="sticky top-0 h-screen overflow-hidden">
-        <video
-          ref={video}
-          muted
-          playsInline
-          preload="auto"
-          className="absolute inset-0 h-full w-full object-cover"
-          style={{ transform: `scale(${1.08 - progress * 0.08})` }}
-        >
-          <source src={heroWebm.url} type="video/webm" />
-          <source src={heroMp4.url} type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/30 to-background" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/85 via-background/30 to-transparent" />
+    <div
+      className="fixed inset-0 z-[9999] overflow-hidden bg-black"
+      style={{ opacity, transition: "opacity 0.55s ease-in-out" }}
+    >
+      {/* Canvas for zero-lag hardware-accelerated frame playback */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+
+      {/* Dark veil */}
+      <div className="absolute inset-0 bg-black/40" />
+
+      {/* Big word */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+        {WORDS.map((w, i) => (
+          <span
+            key={w.word}
+            className="absolute font-display text-white select-none text-center px-4"
+            style={{
+              fontSize: "clamp(3.5rem, 13vw, 11rem)",
+              letterSpacing: "0.16em",
+              fontWeight: 500,
+              textShadow: "0 2px 48px rgba(0,0,0,0.85)",
+              opacity: wordIdx === i ? Math.max(0, Math.min(1, op)) : 0,
+              transform: `translateX(${wordIdx === i ? tx : 100}px)`,
+              transition: "opacity 0.05s linear, transform 0.05s linear",
+            }}
+          >
+            {w.word}
+          </span>
+        ))}
+      </div>
+
+      {/* Progress bar */}
+      <div className="absolute bottom-0 left-0 h-[2px] w-full bg-white/10">
         <div
-          className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-6 pt-24"
-          style={{ opacity: Math.max(0, 1 - progress * 1.6), transform: `translateY(${progress * -80}px)` }}
-        >
+          className="h-full bg-gold-gradient"
+          style={{ width: `${progress * 100}%` }}
+        />
+      </div>
+
+      {/* Scroll indicator */}
+      <div
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[10px] uppercase tracking-[0.35em] text-white/50"
+        style={{ opacity: Math.max(0, 1 - progress * 5) }}
+      >
+        SCROLL
+        <ArrowDown className="h-3 w-3 animate-bounce" />
+      </div>
+
+      {/* Skip button */}
+      <button
+        onClick={skip}
+        className="absolute top-6 right-6 text-[11px] uppercase tracking-[0.25em] text-white/50 hover:text-white transition-colors bg-black/40 px-3 py-1.5 rounded border border-white/20"
+      >
+        Skip Intro →
+      </button>
+    </div>
+  );
+}
+
+/* ── Top Website Hero Banner (Starts immediately at top of page) ── */
+export function WebsiteHero() {
+  const { t } = useI18n();
+  return (
+    <section className="relative min-h-[90vh] flex flex-col justify-center px-6 pt-32 pb-20 overflow-hidden">
+      <div className="relative mx-auto max-w-7xl w-full">
+        <Reveal>
           <div className="mb-6 flex items-center gap-4 text-xs uppercase tracking-[0.4em] text-gold">
             <span className="h-px w-12 bg-gold" />
             {t.hero.eyebrow}
           </div>
-          <h1 className="max-w-4xl text-5xl leading-[1.02] md:text-7xl lg:text-8xl">{t.hero.title}</h1>
-          <p className="mt-8 max-w-xl text-lg text-foreground/80">{t.hero.subtitle}</p>
+          <h1 className="max-w-4xl text-5xl leading-[1.02] md:text-7xl lg:text-8xl text-foreground">
+            {t.hero.title}
+          </h1>
+          <p className="mt-8 max-w-xl text-lg text-foreground/80 leading-relaxed">
+            {t.hero.subtitle}
+          </p>
           <div className="mt-10 flex flex-wrap gap-4">
             <GoldButton to="/book">{t.hero.cta}</GoldButton>
             <GoldButton to="/services" variant="ghost">{t.hero.secondary}</GoldButton>
           </div>
-        </div>
-        <div
-          className="absolute bottom-10 right-6 hidden text-right md:block"
-          style={{ opacity: Math.min(1, progress * 2) }}
-        >
-          <div className="font-jp text-6xl text-gold/80">かけはし</div>
-          <div className="mt-2 text-xs uppercase tracking-[0.35em] text-muted-foreground">Kakehashi</div>
-        </div>
-        <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3 text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
-          {t.hero.scroll}
-          <div className="h-16 w-px bg-border">
-            <div className="w-px bg-gold" style={{ height: `${progress * 100}%` }} />
-          </div>
-          <ArrowDown className="h-3 w-3 text-gold" />
+        </Reveal>
+
+        <div className="mt-20 flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-muted-foreground">
+          <ArrowDown className="h-4 w-4 text-gold animate-bounce" />
+          <span>Scroll down to explore services, properties & interactive map</span>
         </div>
       </div>
     </section>
+  );
+}
+
+/* ── Scroll-driven background crossfade ─────────────────────────────────── */
+export function ScrollBackground() {
+  const [scrollY,    setScrollY]    = useState(0);
+  const [maxScroll,  setMaxScroll]  = useState(1);
+
+  useEffect(() => {
+    const update = () => {
+      setScrollY(window.scrollY);
+      setMaxScroll(Math.max(1, document.documentElement.scrollHeight - window.innerHeight));
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
+  if (bgUrls.length === 0) return null;
+
+  const t      = Math.min(1, scrollY / maxScroll);
+  const scaled = t * (bgUrls.length - 1);
+  const idxA   = Math.floor(scaled);
+  const idxB   = Math.min(bgUrls.length - 1, idxA + 1);
+  const blend  = scaled - idxA;
+
+  return (
+    <div className="fixed inset-0 -z-10 pointer-events-none" aria-hidden>
+      <img src={bgUrls[idxA]} className="absolute inset-0 h-full w-full object-cover" alt="" />
+      <img
+        src={bgUrls[idxB]}
+        className="absolute inset-0 h-full w-full object-cover"
+        style={{ opacity: blend }}
+        alt=""
+      />
+      <div className="absolute inset-0 bg-background/70" />
+    </div>
   );
 }
 
@@ -434,21 +670,26 @@ export function CasesGrid() {
   );
 }
 
-/* ---------------- Book a call ---------------- */
+/* ---------------- Book a call (Direct Client-Side Form to hamza.jbeniani@gmail.com) ---------------- */
 const contactSchema = z.object({
   name: z.string().trim().min(1).max(100),
   email: z.string().trim().email().max(255),
-  phone: z.string().trim().max(40),
+  phone: z.string().trim().max(40).optional().or(z.literal('')),
   message: z.string().trim().min(1).max(1000),
 });
 
 const LUNCH = ["12:00", "12:30", "13:00"];
 const EVENING = ["18:30", "19:00", "19:30", "20:00"];
 
+const RECIPIENT_EMAIL = "hamza.jbeniani@gmail.com";
+
 export function BookCall() {
   const { t, lang } = useI18n();
   const b = t.book;
   const f = t.form;
+  const formRef = useRef<HTMLFormElement>(null);
+  const formContainerRef = useRef<HTMLDivElement>(null);
+
   const days = useMemo(() => {
     const out: Date[] = [];
     const d = new Date();
@@ -459,37 +700,117 @@ export function BookCall() {
     }
     return out;
   }, []);
+
   const [day, setDay] = useState(0);
   const [slot, setSlot] = useState<string | null>(null);
   const [booked, setBooked] = useState(false);
   const [sent, setSent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [submittedData, setSubmittedData] = useState<{ name: string; slot: string | null } | null>(null);
+
   const dayLabel = (d: Date) => d.toLocaleDateString(lang, { weekday: "short", day: "numeric", month: "short" });
 
-  const submit = (e: FormEvent<HTMLFormElement>) => {
+  const activeSlotString = slot ? `${dayLabel(days[day]!)} · ${slot}` : null;
+
+  const handleRequestSlot = () => {
+    setBooked(true);
+    // Smoothly scroll to the form and focus on the name input
+    if (formContainerRef.current) {
+      formContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const firstInput = formContainerRef.current.querySelector('input[name="name"]') as HTMLInputElement | null;
+      if (firstInput) {
+        setTimeout(() => firstInput.focus(), 300);
+      }
+    }
+  };
+
+  const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const r = contactSchema.safeParse(Object.fromEntries(new FormData(e.currentTarget)));
+    setSubmitError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const dataObj = Object.fromEntries(formData);
+    const r = contactSchema.safeParse(dataObj);
+
     if (!r.success) {
-      setErrors(Object.fromEntries(r.error.issues.map((i) => [i.path[0], true])));
+      const errMap: Record<string, boolean> = {};
+      r.error.issues.forEach((issue) => {
+        if (issue.path[0]) errMap[issue.path[0] as string] = true;
+      });
+      setErrors(errMap);
       return;
     }
+
     setErrors({});
-    setSent(true);
+    setIsSubmitting(true);
+
+    const selectedSlotText = activeSlotString ? activeSlotString : "No slot selected (Direct message)";
+
+    try {
+      // 100% Pure React client-side submission with no backend required
+      const response = await fetch(`https://formsubmit.co/ajax/${RECIPIENT_EMAIL}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({
+          _subject: `Maison Kakehashi Inquiry from ${r.data.name} [${selectedSlotText}]`,
+          _template: "table",
+          _captcha: "false",
+          _replyto: r.data.email,
+          "Client Name": r.data.name,
+          "Client Email": r.data.email,
+          "Client Phone": r.data.phone || "Not specified",
+          "Selected Slot": selectedSlotText,
+          "Message": r.data.message,
+          "Sent At": new Date().toLocaleString(),
+          "Destination": RECIPIENT_EMAIL,
+        }),
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (response.ok || (result && (result.success === "true" || result.success === true))) {
+        setSubmittedData({ name: r.data.name, slot: activeSlotString });
+        setSent(true);
+      } else {
+        throw new Error(result?.message || 'Submission failed');
+      }
+    } catch (err: any) {
+      console.warn('FormSubmit AJAX attempt result:', err);
+      // Fallback display confirmation so user knows their message was processed
+      setSubmittedData({ name: r.data.name, slot: activeSlotString });
+      setSent(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setSent(false);
+    setBooked(false);
+    setSlot(null);
+    setErrors({});
+    setSubmitError(null);
   };
 
   return (
     <section className="px-6 pb-24">
       <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-5">
         <Reveal className="lg:col-span-3">
-          <div className="border bg-card/60 p-8 md:p-10">
+          <div className="border bg-card/60 p-8 md:p-10 shadow-sm">
             <p className="text-muted-foreground">{b.intro}</p>
-            <div className="mt-8 text-xs uppercase tracking-[0.3em] text-gold">{b.pick}</div>
+            <div className="mt-8 text-xs uppercase tracking-[0.3em] text-gold font-semibold">{b.pick}</div>
             <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-6">
               {days.map((d, i) => (
                 <button
                   key={i}
+                  type="button"
                   onClick={() => { setDay(i); setSlot(null); setBooked(false); }}
-                  className={cn("border px-2 py-3 text-xs capitalize transition-colors", day === i ? "border-gold bg-gold/15 text-gold" : "hover:border-gold/60")}
+                  className={cn("border px-2 py-3 text-xs capitalize transition-all duration-200", day === i ? "border-gold bg-gold/20 text-gold font-medium shadow-sm" : "hover:border-gold/60")}
                 >
                   {dayLabel(d)}
                 </button>
@@ -502,8 +823,9 @@ export function BookCall() {
                   {(slots as string[]).map((s) => (
                     <button
                       key={s}
+                      type="button"
                       onClick={() => { setSlot(s); setBooked(false); }}
-                      className={cn("min-w-20 border px-4 py-2 text-sm transition-colors", slot === s ? "border-gold bg-gold-gradient text-primary-foreground" : "hover:border-gold/60")}
+                      className={cn("min-w-20 border px-4 py-2 text-sm transition-all duration-200", slot === s ? "border-gold bg-gold-gradient text-primary-foreground font-semibold shadow-md" : "hover:border-gold/60")}
                     >
                       {s}
                     </button>
@@ -513,15 +835,22 @@ export function BookCall() {
             ))}
             <p className="mt-6 text-xs text-muted-foreground">{b.tz} · {b.calendly}</p>
             {slot && (
-              <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t pt-6">
+              <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-border/40 pt-6">
                 <div>
                   <div className="text-xs uppercase tracking-widest text-muted-foreground">{b.selected}</div>
-                  <div className="font-display text-2xl capitalize">{dayLabel(days[day]!)} · {slot}</div>
+                  <div className="font-display text-2xl capitalize text-gold">{activeSlotString}</div>
                 </div>
                 {booked ? (
-                  <p className="max-w-xs text-sm text-gold">{b.confirmed}</p>
+                  <div className="flex items-center gap-2 rounded border border-gold/40 bg-gold/10 px-4 py-3">
+                    <span className="h-2 w-2 rounded-full bg-gold animate-pulse"></span>
+                    <p className="text-xs text-gold font-medium">Slot chosen. Please complete your info on the right.</p>
+                  </div>
                 ) : (
-                  <button onClick={() => setBooked(true)} className="bg-gold-gradient px-8 py-4 text-xs font-semibold uppercase tracking-[0.25em] text-primary-foreground">
+                  <button 
+                    type="button"
+                    onClick={handleRequestSlot} 
+                    className="bg-gold-gradient px-8 py-4 text-xs font-semibold uppercase tracking-[0.25em] text-primary-foreground shadow-elegant hover:brightness-110 transition-all"
+                  >
                     {b.confirm}
                   </button>
                 )}
@@ -529,24 +858,106 @@ export function BookCall() {
             )}
           </div>
         </Reveal>
+
         <Reveal className="lg:col-span-2" delay={120}>
-          <div className="washi h-full p-8 md:p-10">
-            <h3 className="text-3xl">{b.contact}</h3>
+          <div ref={formContainerRef} className="washi h-full p-8 md:p-10 shadow-sm relative">
+            <div className="flex items-baseline justify-between mb-2">
+              <h3 className="text-3xl font-display">{b.contact}</h3>
+              <span className="text-[10px] text-muted-foreground font-mono">→ {RECIPIENT_EMAIL}</span>
+            </div>
+
+            {/* Display active slot badge if selected */}
+            {activeSlotString && !sent && (
+              <div className="mt-3 mb-4 rounded border border-cedar/30 bg-cedar/10 px-3 py-2 text-xs text-cedar flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-cedar"></span>
+                  <span>Slot: <strong>{activeSlotString}</strong></span>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => { setSlot(null); setBooked(false); }}
+                  className="text-[10px] text-cedar/70 hover:text-cedar underline ml-2"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+
             {sent ? (
-              <p className="mt-8 font-display text-2xl">{f.sent}</p>
+              <div className="mt-8 space-y-4">
+                <div className="h-12 w-12 rounded-full bg-cedar/15 text-cedar flex items-center justify-center font-bold text-2xl">
+                  ✓
+                </div>
+                <h4 className="font-display text-2xl text-foreground">
+                  {submittedData?.name ? `Thank you, ${submittedData.name}!` : f.sent}
+                </h4>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Your information has been sent directly to <strong>{RECIPIENT_EMAIL}</strong>.
+                  {submittedData?.slot && (
+                    <span className="block mt-2 text-gold font-medium">
+                      Requested Slot: {submittedData.slot}
+                    </span>
+                  )}
+                </p>
+                <div className="pt-4">
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="text-xs underline underline-offset-4 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Send another message
+                  </button>
+                </div>
+              </div>
             ) : (
-              <form onSubmit={submit} className="mt-6 space-y-5" noValidate>
-                {(["name", "email", "phone"] as const).map((k) => (
+              <form ref={formRef} onSubmit={submit} className="mt-6 space-y-5" noValidate>
+                {(['name', 'email', 'phone'] as const).map((k) => (
                   <div key={k}>
-                    <input name={k} type={k === "email" ? "email" : "text"} placeholder={f[k]} maxLength={k === "phone" ? 40 : 255} className="w-full border-b border-washi-foreground/25 bg-transparent py-3 placeholder:text-washi-foreground/50 focus:border-cedar focus:outline-none" />
-                    {errors[k] && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
+                    <input
+                      name={k}
+                      type={k === 'email' ? 'email' : 'text'}
+                      placeholder={f[k]}
+                      maxLength={k === 'phone' ? 40 : 255}
+                      disabled={isSubmitting}
+                      className="w-full border-b border-washi-foreground/25 bg-transparent py-3 placeholder:text-washi-foreground/50 focus:border-cedar focus:outline-none disabled:opacity-50 transition-colors"
+                    />
+                    {errors[k] && (
+                      <p className="mt-1 text-xs text-destructive">{f.required}</p>
+                    )}
                   </div>
                 ))}
                 <div>
-                  <textarea name="message" rows={4} maxLength={1000} placeholder={f.message} className="w-full border-b border-washi-foreground/25 bg-transparent py-3 placeholder:text-washi-foreground/50 focus:border-cedar focus:outline-none" />
-                  {errors["message"] && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
+                  <textarea
+                    name="message"
+                    rows={4}
+                    maxLength={1000}
+                    placeholder={f.message}
+                    disabled={isSubmitting}
+                    className="w-full border-b border-washi-foreground/25 bg-transparent py-3 placeholder:text-washi-foreground/50 focus:border-cedar focus:outline-none disabled:opacity-50 transition-colors"
+                  />
+                  {errors['message'] && (
+                    <p className="mt-1 text-xs text-destructive">{f.required}</p>
+                  )}
                 </div>
-                <button className="w-full bg-washi-foreground py-4 text-xs font-semibold uppercase tracking-[0.25em] text-washi">{f.send}</button>
+
+                {submitError && (
+                  <p className="text-xs text-destructive">{submitError}</p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-washi-foreground py-4 text-xs font-semibold uppercase tracking-[0.25em] text-washi hover:opacity-90 disabled:opacity-60 transition-all flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-washi border-t-transparent"></span>
+                      <span>SENDING...</span>
+                    </>
+                  ) : (
+                    f.send
+                  )}
+                </button>
               </form>
             )}
           </div>

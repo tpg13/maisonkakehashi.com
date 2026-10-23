@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { HeroVideo, ProjectCards, StoryContent, images } from "@/components/sections";
+import { HeroVideo, WebsiteHero, ProjectCards, StoryContent, ScrollBackground, images } from "@/components/sections";
+import { JapanPropertyMap } from '@/components/JapanPropertyMap';
 import { CtaBand, GoldButton, Reveal, SectionHeading } from "@/components/site";
 import { useI18n } from "@/lib/i18n";
 
@@ -21,7 +22,9 @@ function Index() {
   const { t } = useI18n();
   return (
     <>
+      <ScrollBackground />
       <HeroVideo />
+      <WebsiteHero />
       <ProjectCards />
       <section className="relative overflow-hidden px-6 py-32">
         <img src={images.bridge} alt="" width={1280} height={896} loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-25" />
@@ -50,6 +53,7 @@ function Index() {
           <div className="mt-12"><GoldButton to="/services" variant="ghost">{t.hero.secondary}</GoldButton></div>
         </div>
       </section>
+      <JapanPropertyMap />
       <StoryContent short />
       <CtaBand />
     </>

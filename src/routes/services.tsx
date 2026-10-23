@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ListingCheck, PurchaseSupport } from "@/components/sections";
+import { JapanPropertyMap } from '@/components/JapanPropertyMap';
 import { CtaBand, PageHeader } from "@/components/site";
 import { useI18n } from "@/lib/i18n";
 
@@ -24,6 +25,7 @@ function Services() {
       <PageHeader eyebrow={t.services.eyebrow} title={t.services.title} />
       <PurchaseSupport />
       <ListingCheck />
+      <JapanPropertyMap />
       <CtaBand />
     </>
   );

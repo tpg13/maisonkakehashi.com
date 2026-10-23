@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Menu, X } from "lucide-react";
 import { LANGS, useI18n } from "@/lib/i18n";
+import { CurrencySwitcher } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
 export function ToriiEmblem({ className }: { className?: string }) {
@@ -73,6 +74,7 @@ export function SectionHeading({ eyebrow, title, className, center }: { eyebrow:
 }
 
 export function GoldButton({ to, children, variant = "solid" }: { to: "/book" | "/services" | "/story" | "/projects"; children: ReactNode; variant?: "solid" | "ghost" }) {
+  const isBook = to === "/book";
   return (
     <Link
       to={to}
@@ -81,6 +83,7 @@ export function GoldButton({ to, children, variant = "solid" }: { to: "/book" | 
         variant === "solid"
           ? "bg-gold-gradient text-primary-foreground shadow-elegant hover:brightness-110"
           : "border border-gold/50 text-gold hover:border-gold hover:bg-gold/10",
+        isBook && "btn-book-glow",
       )}
     >
       {children}
@@ -89,6 +92,18 @@ export function GoldButton({ to, children, variant = "solid" }: { to: "/book" | 
 }
 
 export function SiteHeader() {
+  // Hide during full-screen intro
+  const [introActive, setIntroActive] = useState(true);
+  useEffect(() => {
+    // HeroVideo removes 'overflow:hidden' from body when done
+    const obs = new MutationObserver(() => {
+      setIntroActive(document.body.style.overflow === "hidden");
+    });
+    obs.observe(document.body, { attributes: true, attributeFilter: ["style"] });
+    setIntroActive(document.body.style.overflow === "hidden");
+    return () => obs.disconnect();
+  }, []);
+
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -105,7 +120,7 @@ export function SiteHeader() {
     { to: "/faq", label: t.nav.faq },
   ] as const;
   return (
-    <header className="fixed inset-x-0 top-0 z-50">
+    <header className="fixed inset-x-0 top-0 z-50" style={{ opacity: introActive ? 0 : 1, pointerEvents: introActive ? "none" : "auto", transition: "opacity 0.5s ease" }}>
       <div className="bg-gold-gradient px-4 py-2 text-center text-[11px] font-medium tracking-wider text-primary-foreground sm:text-xs">
         {t.banner} <span className="ml-1 opacity-70 text-[10px]">{t.bannerSmall}</span>
       </div>
@@ -124,8 +139,9 @@ export function SiteHeader() {
                 {l.label}
               </Link>
             ))}
+            <CurrencySwitcher />
             <LangSwitcher />
-            <Link to="/book" className="border border-gold/60 px-5 py-2.5 text-xs uppercase tracking-[0.2em] text-gold transition-colors hover:bg-gold hover:text-primary-foreground">
+            <Link to="/book" className="border border-gold/60 px-5 py-2.5 text-xs uppercase tracking-[0.2em] text-gold transition-colors hover:bg-gold hover:text-primary-foreground btn-book-glow-soft">
               {t.nav.book}
             </Link>
           </div>
@@ -143,7 +159,10 @@ export function SiteHeader() {
             <Link to="/book" onClick={() => setOpen(false)} className="font-display text-2xl text-gold">
               {t.nav.book}
             </Link>
-            <LangSwitcher />
+            <div className="flex items-center justify-between pt-2 border-t border-border/40">
+              <CurrencySwitcher />
+              <LangSwitcher />
+            </div>
           </div>
         )}
       </div>

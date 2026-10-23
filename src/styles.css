@@ -112,3 +112,121 @@
 .reveal { opacity: 0; transform: translateY(28px); transition: opacity 1s cubic-bezier(.2,.7,.2,1), transform 1s cubic-bezier(.2,.7,.2,1); }
 .reveal.in { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+
+/* ---- Book-a-call breathing glow ---- */
+@keyframes gold-breathe {
+  0%, 100% {
+    box-shadow:
+      0 0 0px 0px oklch(0.75 0.06 75 / 0%),
+      0 0 0px 0px oklch(0.77 0.13 88 / 0%);
+  }
+  50% {
+    box-shadow:
+      0 0 12px 3px oklch(0.75 0.06 75 / 55%),
+      0 0 28px 6px oklch(0.77 0.13 88 / 25%);
+  }
+}
+
+.btn-book-glow {
+  animation: gold-breathe 2.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) { .btn-book-glow { animation: none; } }
+
+/* ---- Nav book-a-call glow (50% intensity) ---- */
+@keyframes gold-breathe-soft {
+  0%, 100% {
+    box-shadow:
+      0 0 0px 0px oklch(0.75 0.06 75 / 0%),
+      0 0 0px 0px oklch(0.77 0.13 88 / 0%);
+  }
+  50% {
+    box-shadow:
+      0 0 10px 2px oklch(0.75 0.06 75 / 28%),
+      0 0 22px 5px oklch(0.77 0.13 88 / 13%);
+  }
+}
+
+.btn-book-glow-soft {
+  animation: gold-breathe-soft 2.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) { .btn-book-glow-soft { animation: none; } }
+
+/* ---- Mapbox Custom Dark & Gold Popup Styles ---- */
+.mapboxgl-popup.kakehashi-map-popup {
+  z-index: 50;
+}
+
+.mapboxgl-popup.kakehashi-map-popup .mapboxgl-popup-content {
+  background: oklch(0.24 0.035 164 / 96%);
+  backdrop-filter: blur(14px);
+  border: 1px solid oklch(0.75 0.06 75 / 45%);
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 20px oklch(0.75 0.06 75 / 20%);
+  color: oklch(0.95 0.012 85);
+  overflow: hidden;
+}
+
+.mapboxgl-popup.kakehashi-map-popup .mapboxgl-popup-tip {
+  border-top-color: oklch(0.24 0.035 164 / 96%) !important;
+  border-bottom-color: oklch(0.24 0.035 164 / 96%) !important;
+}
+
+.mapboxgl-popup.kakehashi-map-popup .mapboxgl-popup-close-button {
+  color: oklch(0.75 0.06 75);
+  font-size: 18px;
+  padding: 4px 8px;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 9999px;
+  margin: 8px;
+  border: 1px solid oklch(0.75 0.06 75 / 30%);
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.mapboxgl-popup.kakehashi-map-popup .mapboxgl-popup-close-button:hover {
+  background: oklch(0.75 0.06 75);
+  color: #0f241d;
+}
+
+/* ---- MapLibre Custom Dark & Gold Popup Styles ---- */
+.maplibregl-popup.kakehashi-map-popup {
+  z-index: 50;
+}
+
+.maplibregl-popup.kakehashi-map-popup .maplibregl-popup-content {
+  background: oklch(0.24 0.035 164 / 96%);
+  backdrop-filter: blur(14px);
+  border: 1px solid oklch(0.75 0.06 75 / 45%);
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 20px oklch(0.75 0.06 75 / 20%);
+  color: oklch(0.95 0.012 85);
+  overflow: hidden;
+}
+
+.maplibregl-popup.kakehashi-map-popup .maplibregl-popup-tip {
+  border-top-color: oklch(0.24 0.035 164 / 96%) !important;
+  border-bottom-color: oklch(0.24 0.035 164 / 96%) !important;
+}
+
+.maplibregl-popup.kakehashi-map-popup .maplibregl-popup-close-button {
+  color: oklch(0.75 0.06 75);
+  font-size: 18px;
+  padding: 4px 8px;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 9999px;
+  margin: 8px;
+  border: 1px solid oklch(0.75 0.06 75 / 30%);
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.maplibregl-popup.kakehashi-map-popup .maplibregl-popup-close-button:hover {
+  background: oklch(0.75 0.06 75);
+  color: #0f241d;
+}
