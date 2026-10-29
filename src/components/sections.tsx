@@ -10,6 +10,7 @@ import { useI18n } from "@/lib/i18n";
 import { feeSchedule, purchaseFee, LISTING_CHECK_PRICE, TOUR_VISIT_PRICE } from "@/lib/pricing";
 import { GoldButton, Reveal, SectionHeading, ToriiEmblem } from "@/components/site";
 import { cn } from "@/lib/utils";
+import { sendInquiry, RECIPIENT_EMAIL, type SendResult } from "@/lib/email-service";
 
 // Frame images
 const frameModules = import.meta.glob("@/assets/frame/*.jpg", { eager: true, query: "?url", import: "default" }) as Record<string, string>;
@@ -561,7 +562,7 @@ export function ListingCheck() {
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
-  const [submittedData, setSubmittedData] = useState<{ name: string; plan: string } | null>(null);
+  const [submittedData, setSubmittedData] = useState<{ name: string; plan: string; result: SendResult } | null>(null);
 
   const activePrice = selectedPlan === "check" ? LISTING_CHECK_PRICE : TOUR_VISIT_PRICE;
   const activePriceLabel = `${activePrice} CHF`;
@@ -579,37 +580,18 @@ export function ListingCheck() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("https://formsubmit.co/ajax/contact@maisonkakehashi.com", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
+      const result = await sendInquiry(
+        {
+          name: r.data.name,
+          email: r.data.email,
+          link: r.data.link,
+          service: `${activePlanTitle} (${activePriceLabel})`,
+          message: r.data.message || "",
         },
-        body: JSON.stringify({
-          _subject: `Listing Check & Call Request from ${r.data.name} [${activePlanTitle} - ${activePriceLabel}]`,
-          _template: "table",
-          _captcha: "false",
-          _replyto: r.data.email,
-          "Client Name": r.data.name,
-          "Client Email": r.data.email,
-          "Listing Link": r.data.link,
-          "Service Plan": `${activePlanTitle} (${activePriceLabel})`,
-          "Message": r.data.message || "No additional message",
-          "Sent At": new Date().toLocaleString(),
-          "Destination": "contact@maisonkakehashi.com",
-        }),
-      });
+        "Listing Check & Call Request"
+      );
 
-      const res = await response.json().catch(() => null);
-      if (response.ok || (res && (res.success === "true" || res.success === true))) {
-        setSubmittedData({ name: r.data.name, plan: activePlanTitle });
-        setSent(true);
-      } else {
-        throw new Error(res?.message || 'Submission failed');
-      }
-    } catch (err) {
-      console.warn("Listing check submission fallback:", err);
-      setSubmittedData({ name: r.data.name, plan: activePlanTitle });
+      setSubmittedData({ name: r.data.name, plan: activePlanTitle, result });
       setSent(true);
     } finally {
       setIsSubmitting(false);
@@ -709,14 +691,50 @@ export function ListingCheck() {
 
             {sent ? (
               <div className="py-8 text-center space-y-4">
-                <ToriiEmblem className="mx-auto h-14 w-16 text-gold" />
-                <h4 className="font-display text-2xl text-foreground">
-                  {submittedData?.name ? `Thank you, ${submittedData.name}!` : "Request Received"}
-                </h4>
-                <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
-                  Your listing verification request for <strong>{submittedData?.plan}</strong> has been sent to <strong>contact@maisonkakehashi.com</strong>.
-                  We will review the property link and contact you to schedule your call.
-                </p>
+                {submittedData?.result?.success ? (
+                  <>
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gold/15 text-gold text-2xl font-bold">
+                      ✓
+                    </div>
+                    <h4 className="font-display text-2xl text-foreground">
+                      {submittedData?.name ? `Thank you, ${submittedData.name}!` : "Request Sent"}
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
+                      Your listing verification request for <strong>{submittedData?.plan}</strong> has been sent to <strong>contact@maisonkakehashi.com</strong>.
+                      We will review your listing and get back to you within 24 to 48 hours.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <ToriiEmblem className="mx-auto h-12 w-14 text-gold" />
+                    <h4 className="font-display text-2xl text-foreground">
+                      {submittedData?.name ? `Thank you, ${submittedData.name}!` : "Request Ready"}
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
+                      Your request for <strong>{submittedData?.plan}</strong> is ready. Click below to deliver it directly to <strong>contact@maisonkakehashi.com</strong>:
+                    </p>
+                    <div className="pt-2 flex flex-col gap-3 max-w-sm mx-auto">
+                      <a
+                        href={submittedData?.result?.mailtoUrl}
+                        className="w-full bg-gold-gradient py-3.5 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-primary-foreground shadow-elegant hover:brightness-110 transition-all inline-block text-center"
+                      >
+                        Send to contact@maisonkakehashi.com
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (submittedData?.result?.formattedBody) {
+                            navigator.clipboard.writeText(submittedData.result.formattedBody);
+                            alert("Request details copied to clipboard!");
+                          }
+                        }}
+                        className="border border-gold/40 py-2.5 px-4 text-xs uppercase tracking-wider text-gold hover:bg-gold/10 transition-colors"
+                      >
+                        Copy Details to Clipboard
+                      </button>
+                    </div>
+                  </>
+                )}
                 <div className="pt-4">
                   <button
                     type="button"
@@ -893,7 +911,7 @@ export function BookCall() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
-  const [submittedData, setSubmittedData] = useState<{ name: string; slot: string | null } | null>(null);
+  const [submittedData, setSubmittedData] = useState<{ name: string; slot: string | null; result: SendResult } | null>(null);
 
   const dayLabel = (d: Date) => d.toLocaleDateString(lang, { weekday: "short", day: "numeric", month: "short" });
 
