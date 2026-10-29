@@ -1,28 +1,26 @@
 import { useMemo, useEffect, useState } from "react";
 
 // Authentic Japanese Momiji maple leaves from high-res transparent artwork
-const LEAF_IMAGES: { src: string; opacity: number }[] = [
-  { src: "/images/leaves/leaf-red.png",   opacity: 0.85 },
-  { src: "/images/leaves/leaf-amber.png", opacity: 0.80 },
-  { src: "/images/leaves/leaf-gold.png",  opacity: 0.78 },
-  { src: "/images/leaves/leaf-red.png",   opacity: 0.72 },
-  { src: "/images/leaves/leaf-amber.png", opacity: 0.70 },
-  { src: "/images/leaves/leaf-gold.png",  opacity: 0.65 },
+const LEAF_SRCS = [
+  "/images/leaves/leaf-red.png",
+  "/images/leaves/leaf-amber.png",
+  "/images/leaves/leaf-gold.png",
 ];
 
 type Leaf = {
   id: string;
-  x: number;       // % of container width — starting X
-  size: number;    // px width
-  image: { src: string; opacity: number };
+  x: number;              // % of container width — starting X
+  size: number;           // px width
+  src: string;            // image source
+  opacity: number;        // randomized gentle opacity (0.28 to 0.62)
   fallDuration: number;   // s — total fall time
   swayDuration: number;   // s — horizontal sway period
   swayAmp: number;        // px — sway amplitude
   swayPhase: number;      // deg — initial phase in sway
-  rotX: number;    // deg — 3-D tilt around X
-  rotY: number;    // deg — 3-D tilt around Y
-  rotZSpeed: number; // deg/s — spin speed
-  delay: number;   // s — animation start delay
+  rotX: number;           // deg — 3-D tilt around X
+  rotY: number;           // deg — 3-D tilt around Y
+  rotZSpeed: number;      // deg/s — spin speed
+  delay: number;          // s — animation start delay
   side: "left" | "right";
 };
 
@@ -33,17 +31,19 @@ function rand(min: number, max: number) {
 function makeLeaves(n: number, side: "left" | "right"): Leaf[] {
   return Array.from({ length: n }, (_, i) => ({
     id: `${side}-${i}`,
-    x: rand(6, 84),
-    size: rand(24, 42),
-    image: LEAF_IMAGES[Math.floor(Math.random() * LEAF_IMAGES.length)],
-    fallDuration: rand(9, 16),
-    swayDuration: rand(2.6, 4.6),
-    swayAmp: rand(20, 44),
+    x: rand(8, 82),
+    size: rand(20, 36),
+    src: LEAF_SRCS[Math.floor(Math.random() * LEAF_SRCS.length)],
+    // Varied subtle opacities so they don't distract visitors
+    opacity: Number(rand(0.28, 0.62).toFixed(2)),
+    fallDuration: rand(10, 17),
+    swayDuration: rand(2.8, 4.8),
+    swayAmp: rand(18, 38),
     swayPhase: rand(0, 360),
-    rotX: rand(-32, 32),
-    rotY: rand(-48, 48),
-    rotZSpeed: rand(-55, 55),
-    delay: rand(-15, 0),
+    rotX: rand(-30, 30),
+    rotY: rand(-45, 45),
+    rotZSpeed: rand(-50, 50),
+    delay: rand(-16, 0),
     side,
   }));
 }
@@ -60,22 +60,44 @@ function MomijiLeaf({ leaf }: { leaf: Leaf }) {
     <>
       <style>{`
         @keyframes ${kFall} {
-          0%   { transform: translateY(-60px)
-                            rotateX(${leaf.rotX}deg)
-                            rotateY(${leaf.rotY}deg)
-                            rotateZ(0deg);
-                 opacity: 0; }
-          6%   { opacity: ${leaf.image.opacity}; }
-          50%  { transform: translateY(50vh)
-                            rotateX(${-leaf.rotX * 0.7}deg)
-                            rotateY(${-leaf.rotY}deg)
-                            rotateZ(${rotZEnd * 0.5}deg); }
-          94%  { opacity: ${leaf.image.opacity}; }
-          100% { transform: translateY(108vh)
-                            rotateX(${leaf.rotX * 0.3}deg)
-                            rotateY(${leaf.rotY * 0.5}deg)
-                            rotateZ(${rotZEnd}deg);
-                 opacity: 0; }
+          0% {
+            transform: translateY(-60px)
+                      rotateX(${leaf.rotX}deg)
+                      rotateY(${leaf.rotY}deg)
+                      rotateZ(0deg);
+            opacity: 0;
+          }
+          10% {
+            /* Gentle fade-in at the top */
+            opacity: ${leaf.opacity};
+          }
+          58% {
+            /* Mid-screen floating */
+            opacity: ${leaf.opacity};
+            transform: translateY(54vh)
+                      rotateX(${-leaf.rotX * 0.7}deg)
+                      rotateY(${-leaf.rotY}deg)
+                      rotateZ(${rotZEnd * 0.55}deg);
+          }
+          75% {
+            /* Starts dissolving softly as it approaches the ground */
+            opacity: ${(leaf.opacity * 0.4).toFixed(3)};
+          }
+          86% {
+            /* Completely disappears before reaching the ground */
+            opacity: 0;
+            transform: translateY(82vh)
+                      rotateX(${leaf.rotX * 0.3}deg)
+                      rotateY(${leaf.rotY * 0.5}deg)
+                      rotateZ(${rotZEnd * 0.86}deg);
+          }
+          100% {
+            transform: translateY(88vh)
+                      rotateX(${leaf.rotX * 0.2}deg)
+                      rotateY(${leaf.rotY * 0.3}deg)
+                      rotateZ(${rotZEnd}deg);
+            opacity: 0;
+          }
         }
         @keyframes ${kSway} {
           0%   { margin-left: 0px; }
@@ -98,13 +120,13 @@ function MomijiLeaf({ leaf }: { leaf: Leaf }) {
       >
         {/* Inner wrapper handles vertical fall + 3-D rotation */}
         <img
-          src={leaf.image.src}
+          src={leaf.src}
           alt=""
           width={leaf.size}
           height={Math.round(leaf.size * 1.09)}
           style={{
             animation: `${kFall} ${leaf.fallDuration}s ${leaf.delay}s ease-in infinite`,
-            filter: "drop-shadow(0 2px 5px rgba(0,0,0,0.45))",
+            filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.30))",
             willChange: "transform, opacity",
             transformOrigin: "center center",
             display: "block",
