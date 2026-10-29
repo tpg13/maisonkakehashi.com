@@ -7,6 +7,7 @@ import interior from "@/assets/interior.jpg";
 import akiya from "@/assets/akiya.jpg";
 import bridge from "@/assets/bridge.jpg";
 import { useI18n } from "@/lib/i18n";
+import { useCurrency } from "@/lib/currency";
 import { feeSchedule, purchaseFee, LISTING_CHECK_PRICE, TOUR_VISIT_PRICE } from "@/lib/pricing";
 import { GoldButton, Reveal, SectionHeading, ToriiEmblem } from "@/components/site";
 import { cn } from "@/lib/utils";
@@ -441,11 +442,37 @@ export function FreeDiscoveryCall() {
 /* ---------------- 02 Purchase support & assistance ---------------- */
 export function PurchaseSupport() {
   const { t } = useI18n();
+  const { formatChf, currency } = useCurrency();
   const s = t.services;
   const [price, setPrice] = useState(45000);
   const fee = purchaseFee(price);
   const { deposit, balance } = feeSchedule(fee);
-  const fmt = (n: number) => `${n.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: n % 1 ? 2 : 0 })} CHF`;
+  const fmt = (n: number) => formatChf(n);
+
+  const tiersFormatted = useMemo(() => {
+    if (currency === "CHF") {
+      return s.tiers;
+    }
+    return [
+      [`0 – ${formatChf(12000)}`, formatChf(1350)],
+      [`${formatChf(12000)} – ${formatChf(50000)}`, formatChf(1850)],
+      [`${formatChf(50000)} – ${formatChf(95000)}`, formatChf(2750)],
+      [`> ${formatChf(95000)}`, formatChf(3250)],
+    ];
+  }, [currency, s.tiers, formatChf]);
+
+  const extrasFormatted = useMemo(() => {
+    if (currency === "CHF") {
+      return s.extras;
+    }
+    return s.extras.map(([k, v]) => {
+      const kLower = k.toLowerCase();
+      if (kLower.includes("renovation") || kLower.includes("rénovation") || kLower.includes("ristrutturazione") || kLower.includes("renovierung")) {
+        return [k, `(Min. ${formatChf(5000)}) 9% • > ${formatChf(25000)}: 7.5%`];
+      }
+      return [k, v];
+    });
+  }, [currency, s.extras, formatChf]);
 
   return (
     <section className="px-6 py-24 border-b border-border/30">
@@ -482,7 +509,7 @@ export function PurchaseSupport() {
             <div className="washi h-full p-10 shadow-sm">
               <h3 className="text-3xl font-display">{s.pricing}</h3>
               <div className="mt-8 divide-y divide-washi-foreground/15">
-                {s.tiers.map(([range, p]) => (
+                {tiersFormatted.map(([range, p]) => (
                   <div key={range} className="flex items-baseline justify-between py-4">
                     <span className="text-washi-foreground/75 font-medium">{range}</span>
                     <span className="font-display text-3xl text-cedar">{p}</span>
@@ -491,7 +518,7 @@ export function PurchaseSupport() {
               </div>
               <p className="mt-6 text-sm text-washi-foreground/70">{s.payment}</p>
               <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                {s.extras.map(([k, v]) => (
+                {extrasFormatted.map(([k, v]) => (
                   <div key={k} className="border-t border-cedar/40 pt-3">
                     <div className="text-xs uppercase tracking-widest text-cedar font-semibold">{k}</div>
                     <div className="mt-1 text-sm text-washi-foreground/80 leading-snug">{v}</div>
@@ -504,7 +531,7 @@ export function PurchaseSupport() {
             <div className="h-full border border-gold/40 bg-card/60 p-10 shadow-elegant">
               <h3 className="text-2xl text-gold font-display">{s.calc}</h3>
               <label className="mt-6 block text-xs uppercase tracking-widest text-muted-foreground" htmlFor="price">
-                {s.calcLabel}
+                {s.calcLabel.replace('(CHF)', `(${currency})`)}
               </label>
               <div className="mt-2 font-display text-4xl text-foreground">{fmt(price)}</div>
               <input
@@ -555,6 +582,7 @@ const inputCls =
 
 export function ListingCheck() {
   const { t } = useI18n();
+  const { formatChf } = useCurrency();
   const s = t.services;
   const f = t.form;
 
@@ -565,7 +593,7 @@ export function ListingCheck() {
   const [submittedData, setSubmittedData] = useState<{ name: string; plan: string; result: SendResult } | null>(null);
 
   const activePrice = selectedPlan === "check" ? LISTING_CHECK_PRICE : TOUR_VISIT_PRICE;
-  const activePriceLabel = `${activePrice} CHF`;
+  const activePriceLabel = formatChf(activePrice);
   const activePlanTitle = selectedPlan === "check" ? s.s2Option1Title : s.s2Option2Title;
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
@@ -641,7 +669,7 @@ export function ListingCheck() {
                   {s.s2Option1Title}
                 </div>
                 <div className="font-display text-3xl font-bold text-gold">
-                  {s.s2Option1Price}
+                  {formatChf(LISTING_CHECK_PRICE)}
                 </div>
               </div>
               <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
@@ -664,7 +692,7 @@ export function ListingCheck() {
                   {s.s2Option2Title}
                 </div>
                 <div className="font-display text-3xl font-bold text-foreground">
-                  {s.s2Option2Price}
+                  {formatChf(TOUR_VISIT_PRICE)}
                 </div>
               </div>
               <p className="mt-3 text-sm text-muted-foreground leading-relaxed">

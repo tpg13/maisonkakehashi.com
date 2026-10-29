@@ -8,7 +8,7 @@ export const CURRENCY_SYMBOLS: Record<Currency, string> = {
   USD: '$',
   JPY: '¥',
   GBP: '£',
-  CHF: 'CHF ',
+  CHF: 'CHF',
 };
 
 export const CURRENCY_NAMES: Record<Currency, string> = {
@@ -33,6 +33,11 @@ interface CurrencyContextValue {
   setCurrency: (c: Currency) => void;
   convertFromEur: (amountEur: number) => number;
   formatEur: (amountEur: number, options?: { roundToThousands?: boolean; fractionDigits?: number }) => string;
+  convertFromChf: (amountChf: number) => number;
+  formatChf: (
+    amountChf: number,
+    options?: { roundToThousands?: boolean; fractionDigits?: number; compact?: boolean }
+  ) => string;
   symbol: string;
 }
 
@@ -41,7 +46,7 @@ const CurrencyContext = createContext<CurrencyContextValue | null>(null);
 const STORAGE_KEY = 'kakehashi_selected_currency';
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
-  const [currency, setCurrencyState] = useState<Currency>('EUR');
+  const [currency, setCurrencyState] = useState<Currency>('CHF');
 
   useEffect(() => {
     try {
@@ -76,13 +81,15 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     const sym = CURRENCY_SYMBOLS[currency];
 
     if (currency === 'JPY') {
-      const rounded = Math.round(converted / 10000) * 10000;
+      const rounded = Math.round(converted / 1000) * 1000;
       return `${sym}${rounded.toLocaleString('en-US')}`;
     }
 
     if (options?.roundToThousands && converted >= 1000) {
       const rounded = Math.round(converted / 1000) * 1000;
-      return `${sym}${rounded.toLocaleString('en-US')}`;
+      return currency === 'EUR'
+        ? `${rounded.toLocaleString('en-US')} €`
+        : `${sym}${rounded.toLocaleString('en-US')}`;
     }
 
     const digits = options?.fractionDigits ?? (converted % 1 !== 0 ? 2 : 0);
@@ -91,6 +98,64 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       maximumFractionDigits: digits,
     });
 
+    if (currency === 'EUR') {
+      return `${formattedNum} €`;
+    }
+    if (currency === 'CHF') {
+      return `${formattedNum} CHF`;
+    }
+    return `${sym}${formattedNum}`;
+  };
+
+  const convertFromChf = (amountChf: number): number => {
+    if (currency === 'CHF') return amountChf;
+    const rateEur = amountChf / (EXCHANGE_RATES.CHF || 0.96);
+    const targetRate = EXCHANGE_RATES[currency] || 1;
+    return rateEur * targetRate;
+  };
+
+  const formatChf = (
+    amountChf: number,
+    options?: { roundToThousands?: boolean; fractionDigits?: number; compact?: boolean }
+  ): string => {
+    if (currency === 'CHF') {
+      const formatted = amountChf.toLocaleString('en-US', {
+        minimumFractionDigits: options?.fractionDigits ?? 0,
+        maximumFractionDigits: options?.fractionDigits ?? 0,
+      });
+      return `${formatted} CHF`;
+    }
+
+    const converted = convertFromChf(amountChf);
+    const sym = CURRENCY_SYMBOLS[currency].trim();
+
+    if (currency === 'JPY') {
+      let rounded = Math.round(converted);
+      if (converted >= 10000) {
+        rounded = Math.round(converted / 1000) * 1000;
+      } else {
+        rounded = Math.round(converted / 100) * 100;
+      }
+      return `${sym}${rounded.toLocaleString('en-US')}`;
+    }
+
+    if (options?.roundToThousands && converted >= 1000) {
+      const rounded = Math.round(converted / 1000) * 1000;
+      return currency === 'EUR'
+        ? `${rounded.toLocaleString('en-US')} €`
+        : `${sym}${rounded.toLocaleString('en-US')}`;
+    }
+
+    const digits = options?.fractionDigits ?? (converted >= 50 ? 0 : 2);
+    const rounded = digits === 0 ? Math.round(converted) : converted;
+    const formattedNum = rounded.toLocaleString('en-US', {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    });
+
+    if (currency === 'EUR') {
+      return `${formattedNum} €`;
+    }
     return `${sym}${formattedNum}`;
   };
 
@@ -101,6 +166,8 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         setCurrency,
         convertFromEur,
         formatEur,
+        convertFromChf,
+        formatChf,
         symbol: CURRENCY_SYMBOLS[currency],
       }}
     >
@@ -112,13 +179,14 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 export function useCurrency() {
   const ctx = useContext(CurrencyContext);
   if (!ctx) {
-    // Graceful fallback if used outside provider
     return {
-      currency: 'EUR' as Currency,
+      currency: 'CHF' as Currency,
       setCurrency: () => {},
       convertFromEur: (amt: number) => amt,
-      formatEur: (amt: number) => `€${amt.toLocaleString()}`,
-      symbol: '€',
+      formatEur: (amt: number) => `${amt.toLocaleString()} €`,
+      convertFromChf: (amt: number) => amt,
+      formatChf: (amt: number) => `${amt.toLocaleString()} CHF`,
+      symbol: 'CHF',
     };
   }
   return ctx;

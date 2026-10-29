@@ -3,6 +3,7 @@ import { HeroVideo, WebsiteHero, ProjectCards, StoryContent, ScrollBackground, i
 import { JapanPropertyMap } from '@/components/JapanPropertyMap';
 import { CtaBand, GoldButton, Reveal, SectionHeading } from "@/components/site";
 import { useI18n } from "@/lib/i18n";
+import { useCurrency } from "@/lib/currency";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const { t } = useI18n();
+  const { formatChf } = useCurrency();
   return (
     <>
       <ScrollBackground />
@@ -36,8 +38,8 @@ function Index() {
           <div className="mt-14 grid gap-8 md:grid-cols-3">
             {[
               [t.services.s0, t.services.s0Items, t.services.s0Free],
-              [t.services.s1, t.services.step1Items.concat(t.services.step2Items.slice(0, 1)), "From 1,350 CHF"],
-              [t.services.s2, t.services.s2Items.slice(0, 3), "75 CHF"],
+              [t.services.s1, t.services.step1Items.concat(t.services.step2Items.slice(0, 1)), `From ${formatChf(1350)}`],
+              [t.services.s2, t.services.s2Items.slice(0, 3), formatChf(75)],
             ].map(([title, items, from], i) => (
               <Reveal key={i} delay={i * 120}>
                 <div className="h-full border bg-background/70 p-8 md:p-10 backdrop-blur flex flex-col justify-between">
