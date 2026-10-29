@@ -22,18 +22,36 @@ export function Reveal({ children, className, delay = 0 }: { children: ReactNode
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    const markIn = () => {
+      el.classList.add("in");
+    };
+
+    // If already in viewport on mount, reveal immediately
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      markIn();
+      return;
+    }
+
     const io = new IntersectionObserver(
       ([e]) => {
         if (e?.isIntersecting) {
-          el.classList.add("in");
+          markIn();
           io.disconnect();
         }
       },
-      { threshold: 0.12 },
+      { threshold: 0.05 },
     );
     io.observe(el);
-    return () => io.disconnect();
-  }, []);
+
+    // Failsafe timer: ensures content never stays hidden if IO doesn't trigger
+    const timer = setTimeout(markIn, 400 + delay);
+
+    return () => {
+      io.disconnect();
+      clearTimeout(timer);
+    };
+  }, [delay]);
   return (
     <div ref={ref} className={cn("reveal", className)} style={{ transitionDelay: `${delay}ms` }}>
       {children}
@@ -92,18 +110,6 @@ export function GoldButton({ to, children, variant = "solid" }: { to: "/book" | 
 }
 
 export function SiteHeader() {
-  // Hide during full-screen intro
-  const [introActive, setIntroActive] = useState(true);
-  useEffect(() => {
-    // HeroVideo removes 'overflow:hidden' from body when done
-    const obs = new MutationObserver(() => {
-      setIntroActive(document.body.style.overflow === "hidden");
-    });
-    obs.observe(document.body, { attributes: true, attributeFilter: ["style"] });
-    setIntroActive(document.body.style.overflow === "hidden");
-    return () => obs.disconnect();
-  }, []);
-
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -120,9 +126,22 @@ export function SiteHeader() {
     { to: "/faq", label: t.nav.faq },
   ] as const;
   return (
-    <header className="fixed inset-x-0 top-0 z-50" style={{ opacity: introActive ? 0 : 1, pointerEvents: introActive ? "none" : "auto", transition: "opacity 0.5s ease" }}>
-      <div className="bg-gold-gradient px-4 py-2 text-center text-[11px] font-medium tracking-wider text-primary-foreground sm:text-xs">
-        {t.banner} <span className="ml-1 opacity-70 text-[10px]">{t.bannerSmall}</span>
+    <header className="fixed inset-x-0 top-0 z-50">
+      <div className="bg-gold-gradient overflow-hidden whitespace-nowrap py-2 text-primary-foreground select-none">
+        <div className="flex w-max animate-marquee items-center gap-10 text-[11px] font-semibold tracking-wider uppercase sm:text-xs">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <span key={i} className="inline-flex items-center gap-3">
+              <span className="animate-spin-slow text-primary-foreground/90 text-xs">✦</span>
+              <span>
+                <strong className="underline decoration-primary-foreground/40 underline-offset-2">
+                  {t.bannerOffer}
+                </strong>{" "}
+                — {t.bannerText}
+              </span>
+              <span className="text-primary-foreground/50 text-[10px]">•</span>
+            </span>
+          ))}
+        </div>
       </div>
       <div className={cn("transition-all duration-500", scrolled || open ? "bg-background/90 backdrop-blur-md border-b" : "bg-transparent")}>
         <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">

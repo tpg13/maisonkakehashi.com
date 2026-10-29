@@ -4,8 +4,10 @@ export const LANGS = ["en", "fr", "it", "de"] as const;
 export type Lang = (typeof LANGS)[number];
 
 const en = {
-  banner: "Possibility of covering part of your notary fees*",
-  bannerSmall: "*depending on the case",
+  banner: "*Launch Offer* — 10% to 25% discount depending on the project, with the possibility of partially or fully covering your notary fees.",
+  bannerOffer: "*Launch Offer*",
+  bannerText: "10% to 25% discount depending on the project, with the possibility of partially or fully covering your notary fees.",
+  bannerSmall: "",
   nav: { home: "Home", services: "Services", story: "My story", projects: "Projects", faq: "FAQ", book: "Book a call" },
   hero: {
     eyebrow: "Japan Property Consulting",
@@ -177,8 +179,10 @@ const en = {
 export type Dict = typeof en;
 
 const fr: Dict = {
-  banner: "Possibilité de prise en charge d'une partie de vos frais de notaire*",
-  bannerSmall: "*selon les cas",
+  banner: "*Offre de lancement* — 10 % à 25 % de réduction selon le projet, avec possibilité de prise en charge partielle ou totale de vos frais de notaire.",
+  bannerOffer: "*Offre de lancement*",
+  bannerText: "10 % à 25 % de réduction selon le projet, avec possibilité de prise en charge partielle ou totale de vos frais de notaire.",
+  bannerSmall: "",
   nav: { home: "Accueil", services: "Services", story: "Mon histoire", projects: "Projets", faq: "FAQ", book: "Réserver un appel" },
   hero: {
     eyebrow: "Conseil immobilier au Japon",
@@ -348,8 +352,10 @@ const fr: Dict = {
 };
 
 const it: Dict = {
-  banner: "Possibilità di coprire parte delle spese notarili*",
-  bannerSmall: "*a seconda dei casi",
+  banner: "*Offerta di lancio* — dal 10% al 25% di sconto a seconda del progetto, con possibilità di copertura parziale o totale delle spese notarili.",
+  bannerOffer: "*Offerta di lancio*",
+  bannerText: "dal 10% al 25% di sconto a seconda del progetto, con possibilità di copertura parziale o totale delle spese notarili.",
+  bannerSmall: "",
   nav: { home: "Home", services: "Servizi", story: "La mia storia", projects: "Progetti", faq: "FAQ", book: "Prenota una chiamata" },
   hero: {
     eyebrow: "Consulenza immobiliare in Giappone",
@@ -519,8 +525,10 @@ const it: Dict = {
 };
 
 const de: Dict = {
-  banner: "Möglichkeit der Übernahme eines Teils Ihrer Notarkosten*",
-  bannerSmall: "*je nach Fall",
+  banner: "*Eröffnungsangebot* — 10 % bis 25 % Rabatt je nach Projekt, mit der Möglichkeit einer teilweisen oder vollständigen Übernahme Ihrer Notarkosten.",
+  bannerOffer: "*Eröffnungsangebot*",
+  bannerText: "10 % bis 25 % Rabatt je nach Projekt, mit der Möglichkeit einer teilweisen oder vollständigen Übernahme Ihrer Notarkosten.",
+  bannerSmall: "",
   nav: { home: "Start", services: "Leistungen", story: "Meine Geschichte", projects: "Projekte", faq: "FAQ", book: "Gespräch buchen" },
   hero: {
     eyebrow: "Immobilienberatung in Japan",
