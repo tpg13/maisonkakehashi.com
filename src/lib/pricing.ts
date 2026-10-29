@@ -27,4 +27,4 @@ export function renovationFee(worksAmount: number): number {
 }
 
 export const LISTING_CHECK_PRICE = 75;
-export const TOUR_VISIT_PRICE = 320;
+export const TOUR_VISIT_PRICE = 189;

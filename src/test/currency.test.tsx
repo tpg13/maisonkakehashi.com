@@ -8,11 +8,11 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 );
 
 describe("currency context and conversion", () => {
-  it("defaults to CHF and formats 75 CHF and 320 CHF correctly", () => {
+  it("defaults to CHF and formats 75 CHF and 189 CHF correctly", () => {
     const { result } = renderHook(() => useCurrency(), { wrapper });
     expect(result.current.currency).toBe("CHF");
     expect(result.current.formatChf(75)).toBe("75 CHF");
-    expect(result.current.formatChf(320)).toBe("320 CHF");
+    expect(result.current.formatChf(189)).toBe("189 CHF");
     expect(result.current.formatChf(1350)).toBe("1,350 CHF");
   });
 

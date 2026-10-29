@@ -12,5 +12,5 @@ describe("pricing", () => {
   it("renovation minimum 5,000 CHF base (9% = 450)", () => expect(renovationFee(2000)).toBe(450));
   it("renovation > 25k is 7.5% of works", () => expect(renovationFee(40000)).toBe(3000));
   it("listing check is 75 CHF", () => expect(LISTING_CHECK_PRICE).toBe(75));
-  it("day tour visit is 320 CHF", () => expect(TOUR_VISIT_PRICE).toBe(320));
+  it("day tour visit starts from 189 CHF", () => expect(TOUR_VISIT_PRICE).toBe(189));
 });

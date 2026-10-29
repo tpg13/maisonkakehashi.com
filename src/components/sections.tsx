@@ -593,7 +593,7 @@ export function ListingCheck() {
   const [submittedData, setSubmittedData] = useState<{ name: string; plan: string; result: SendResult } | null>(null);
 
   const activePrice = selectedPlan === "check" ? LISTING_CHECK_PRICE : TOUR_VISIT_PRICE;
-  const activePriceLabel = formatChf(activePrice);
+  const activePriceLabel = selectedPlan === "check" ? formatChf(LISTING_CHECK_PRICE) : `${s.from || "From"} ${formatChf(TOUR_VISIT_PRICE)}`;
   const activePlanTitle = selectedPlan === "check" ? s.s2Option1Title : s.s2Option2Title;
 
   const submit = async (e: FormEvent<HTMLFormElement>) => {
@@ -692,6 +692,7 @@ export function ListingCheck() {
                   {s.s2Option2Title}
                 </div>
                 <div className="font-display text-3xl font-bold text-foreground">
+                  <span className="text-sm font-sans font-normal text-muted-foreground mr-1.5 uppercase tracking-wider">{s.from || "From"}</span>
                   {formatChf(TOUR_VISIT_PRICE)}
                 </div>
               </div>
