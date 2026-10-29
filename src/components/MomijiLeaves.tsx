@@ -1,25 +1,20 @@
 import { useMemo, useEffect, useState } from "react";
 
-// Accurate 7-lobe Japanese red maple (momiji) leaf path — as specified
-const MOMIJI_PATH =
-  "M50 95 L48 70 C48 70 42 60 35 55 C25 48 5 45 5 45 C5 45 22 42 32 38 C40 34 45 25 45 25 C45 25 44 15 47 5 C50 15 51 25 51 25 C51 25 58 34 66 38 C76 42 95 45 95 45 C95 45 75 48 65 55 C58 60 52 70 52 70 Z";
-
-const COLORS: { fill: string; opacity: number }[] = [
-  { fill: "#C0392B", opacity: 0.72 },
-  { fill: "#900C3F", opacity: 0.65 },
-  { fill: "#B71C1C", opacity: 0.70 },
-  { fill: "#D4AF37", opacity: 0.55 },
-  { fill: "#C0392B", opacity: 0.80 },
-  { fill: "#900C3F", opacity: 0.60 },
-  { fill: "#A93226", opacity: 0.68 },
-  { fill: "#D4AF37", opacity: 0.50 },
+// Authentic Japanese Momiji maple leaves from high-res transparent artwork
+const LEAF_IMAGES: { src: string; opacity: number }[] = [
+  { src: "/images/leaves/leaf-red.png",   opacity: 0.85 },
+  { src: "/images/leaves/leaf-amber.png", opacity: 0.80 },
+  { src: "/images/leaves/leaf-gold.png",  opacity: 0.78 },
+  { src: "/images/leaves/leaf-red.png",   opacity: 0.72 },
+  { src: "/images/leaves/leaf-amber.png", opacity: 0.70 },
+  { src: "/images/leaves/leaf-gold.png",  opacity: 0.65 },
 ];
 
 type Leaf = {
   id: string;
   x: number;       // % of container width — starting X
-  size: number;    // px
-  color: { fill: string; opacity: number };
+  size: number;    // px width
+  image: { src: string; opacity: number };
   fallDuration: number;   // s — total fall time
   swayDuration: number;   // s — horizontal sway period
   swayAmp: number;        // px — sway amplitude
@@ -38,17 +33,17 @@ function rand(min: number, max: number) {
 function makeLeaves(n: number, side: "left" | "right"): Leaf[] {
   return Array.from({ length: n }, (_, i) => ({
     id: `${side}-${i}`,
-    x: rand(8, 88),
-    size: rand(18, 32),
-    color: COLORS[Math.floor(Math.random() * COLORS.length)],
-    fallDuration: rand(8, 15),
-    swayDuration: rand(2.5, 4.5),
-    swayAmp: rand(18, 40),
+    x: rand(6, 84),
+    size: rand(24, 42),
+    image: LEAF_IMAGES[Math.floor(Math.random() * LEAF_IMAGES.length)],
+    fallDuration: rand(9, 16),
+    swayDuration: rand(2.6, 4.6),
+    swayAmp: rand(20, 44),
     swayPhase: rand(0, 360),
-    rotX: rand(-30, 30),
-    rotY: rand(-45, 45),
-    rotZSpeed: rand(-50, 50),
-    delay: rand(-14, 0),
+    rotX: rand(-32, 32),
+    rotY: rand(-48, 48),
+    rotZSpeed: rand(-55, 55),
+    delay: rand(-15, 0),
     side,
   }));
 }
@@ -65,17 +60,17 @@ function MomijiLeaf({ leaf }: { leaf: Leaf }) {
     <>
       <style>{`
         @keyframes ${kFall} {
-          0%   { transform: translateY(-50px)
+          0%   { transform: translateY(-60px)
                             rotateX(${leaf.rotX}deg)
                             rotateY(${leaf.rotY}deg)
                             rotateZ(0deg);
                  opacity: 0; }
-          6%   { opacity: ${leaf.color.opacity}; }
+          6%   { opacity: ${leaf.image.opacity}; }
           50%  { transform: translateY(50vh)
-                            rotateX(${-leaf.rotX * 0.6}deg)
+                            rotateX(${-leaf.rotX * 0.7}deg)
                             rotateY(${-leaf.rotY}deg)
                             rotateZ(${rotZEnd * 0.5}deg); }
-          94%  { opacity: ${leaf.color.opacity}; }
+          94%  { opacity: ${leaf.image.opacity}; }
           100% { transform: translateY(108vh)
                             rotateX(${leaf.rotX * 0.3}deg)
                             rotateY(${leaf.rotY * 0.5}deg)
@@ -102,23 +97,22 @@ function MomijiLeaf({ leaf }: { leaf: Leaf }) {
         }}
       >
         {/* Inner wrapper handles vertical fall + 3-D rotation */}
-        <svg
+        <img
+          src={leaf.image.src}
+          alt=""
           width={leaf.size}
-          height={leaf.size}
-          viewBox="0 0 100 100"
+          height={Math.round(leaf.size * 1.09)}
           style={{
             animation: `${kFall} ${leaf.fallDuration}s ${leaf.delay}s ease-in infinite`,
-            fill: leaf.color.fill,
-            filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.4))",
+            filter: "drop-shadow(0 2px 5px rgba(0,0,0,0.45))",
             willChange: "transform, opacity",
             transformOrigin: "center center",
             display: "block",
             pointerEvents: "none",
+            userSelect: "none",
           }}
           aria-hidden
-        >
-          <path d={MOMIJI_PATH} />
-        </svg>
+        />
       </div>
     </>
   );
@@ -156,7 +150,7 @@ export function MomijiLeaves() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const check = () => setVisible(window.innerWidth > 1340);
+    const check = () => setVisible(window.innerWidth > 1100);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
