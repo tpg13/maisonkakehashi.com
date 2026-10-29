@@ -33,19 +33,22 @@ function Index() {
           <Reveal>
             <SectionHeading eyebrow={t.services.eyebrow} title={t.services.title} />
           </Reveal>
-          <div className="mt-14 grid gap-8 md:grid-cols-2">
+          <div className="mt-14 grid gap-8 md:grid-cols-3">
             {[
-              [t.services.s1, t.services.step1Items.concat(t.services.step2Items.slice(0, 2)), t.services.tiers[0]![1]],
-              [t.services.s2, t.services.s2Items.slice(0, 4), "€45"],
+              [t.services.s0, t.services.s0Items, t.services.s0Free],
+              [t.services.s1, t.services.step1Items.concat(t.services.step2Items.slice(0, 1)), "From 1,350 CHF"],
+              [t.services.s2, t.services.s2Items.slice(0, 3), "75 CHF"],
             ].map(([title, items, from], i) => (
               <Reveal key={i} delay={i * 120}>
-                <div className="h-full border bg-background/70 p-10 backdrop-blur">
-                  <span className="font-display text-6xl text-gold/30">0{i + 1}</span>
-                  <h3 className="mt-2 text-3xl">{title as string}</h3>
-                  <ul className="mt-6 space-y-2 text-muted-foreground">
-                    {(items as string[]).map((x) => <li key={x}>— {x}</li>)}
-                  </ul>
-                  <div className="mt-8 font-display text-3xl text-gold">{from as string}{i === 0 ? "+" : ""}</div>
+                <div className="h-full border bg-background/70 p-8 md:p-10 backdrop-blur flex flex-col justify-between">
+                  <div>
+                    <span className="font-display text-6xl text-gold/30">0{i + 1}</span>
+                    <h3 className="mt-2 text-2xl md:text-3xl font-display">{title as string}</h3>
+                    <ul className="mt-6 space-y-2.5 text-muted-foreground text-sm">
+                      {(items as string[]).map((x) => <li key={x}>— {x}</li>)}
+                    </ul>
+                  </div>
+                  <div className="mt-8 font-display text-3xl text-gold">{from as string}</div>
                 </div>
               </Reveal>
             ))}

@@ -7,7 +7,7 @@ import interior from "@/assets/interior.jpg";
 import akiya from "@/assets/akiya.jpg";
 import bridge from "@/assets/bridge.jpg";
 import { useI18n } from "@/lib/i18n";
-import { feeSchedule, purchaseFee, LISTING_CHECK_PRICE } from "@/lib/pricing";
+import { feeSchedule, purchaseFee, LISTING_CHECK_PRICE, TOUR_VISIT_PRICE } from "@/lib/pricing";
 import { GoldButton, Reveal, SectionHeading, ToriiEmblem } from "@/components/site";
 import { cn } from "@/lib/utils";
 
@@ -378,20 +378,80 @@ export function ProjectCards() {
   );
 }
 
-/* ---------------- Purchase support ---------------- */
-export function PurchaseSupport() {
+/* ---------------- 01 Free Discovery Call ---------------- */
+export function FreeDiscoveryCall() {
   const { t } = useI18n();
   const s = t.services;
-  const [price, setPrice] = useState(30000);
-  const fee = purchaseFee(price);
-  const { deposit, balance } = feeSchedule(fee);
-  const fmt = (n: number) => `€${n.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: n % 1 ? 2 : 0 })}`;
   return (
-    <section className="px-6 py-24">
+    <section className="px-6 py-24 border-b border-border/30">
       <div className="mx-auto max-w-7xl">
         <Reveal>
           <div className="flex items-baseline gap-6">
             <span className="font-display text-7xl text-gold/30">01</span>
+            <h2 className="text-4xl md:text-5xl">{s.s0}</h2>
+          </div>
+          <p className="mt-4 max-w-2xl text-lg text-muted-foreground">{s.s0Subtitle}</p>
+        </Reveal>
+
+        <div className="mt-12 grid gap-8 lg:grid-cols-12 items-center">
+          <Reveal className="lg:col-span-8">
+            <div className="h-full border border-gold/40 bg-card/60 p-8 md:p-12 shadow-elegant relative overflow-hidden">
+              <div className="absolute top-0 right-0 h-32 w-32 bg-gold/5 blur-3xl pointer-events-none" />
+              <div className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-gold font-semibold">
+                <span className="h-px w-8 bg-gold" />
+                <span>30-Minute Free Discovery</span>
+              </div>
+              <h3 className="mt-4 font-display text-2xl md:text-3xl text-foreground">
+                Get clarity on your journey to owning a home in Japan
+              </h3>
+              <ul className="mt-8 space-y-4">
+                {s.s0Items.map((it) => (
+                  <li key={it} className="flex items-start gap-3.5 text-base text-foreground/90">
+                    <Check className="mt-1 h-5 w-5 shrink-0 text-gold" />
+                    <span>{it}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-10 flex flex-wrap items-center gap-6 pt-6 border-t border-border/40">
+                <GoldButton to="/book">{s.s0Cta}</GoldButton>
+                <div className="text-xs uppercase tracking-widest text-muted-foreground">
+                  No commitment · Lunchtime & evening slots available
+                </div>
+              </div>
+            </div>
+          </Reveal>
+
+          <Reveal className="lg:col-span-4" delay={120}>
+            <div className="washi p-8 md:p-10 text-center flex flex-col items-center justify-center min-h-[320px] shadow-sm">
+              <ToriiEmblem className="h-16 w-16 text-gold mb-6" />
+              <span className="text-xs uppercase tracking-[0.35em] text-cedar font-semibold">Zero Cost</span>
+              <div className="mt-2 font-display text-6xl text-cedar">{s.s0Free}</div>
+              <p className="mt-4 text-xs text-washi-foreground/75 leading-relaxed max-w-xs">
+                Discuss your criteria, budget, prefectures of interest, and key legal requirements with a Swiss-based owner.
+              </p>
+            </div>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- 02 Purchase support & assistance ---------------- */
+export function PurchaseSupport() {
+  const { t } = useI18n();
+  const s = t.services;
+  const [price, setPrice] = useState(45000);
+  const fee = purchaseFee(price);
+  const { deposit, balance } = feeSchedule(fee);
+  const fmt = (n: number) => `${n.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: n % 1 ? 2 : 0 })} CHF`;
+
+  return (
+    <section className="px-6 py-24 border-b border-border/30">
+      <div className="mx-auto max-w-7xl">
+        <Reveal>
+          <div className="flex items-baseline gap-6">
+            <span className="font-display text-7xl text-gold/30">02</span>
             <h2 className="text-4xl md:text-5xl">{s.s1}</h2>
           </div>
         </Reveal>
@@ -401,11 +461,12 @@ export function PurchaseSupport() {
             [s.step2, s.step2Items],
           ].map(([title, items], i) => (
             <Reveal key={i} delay={i * 120}>
-              <div className="h-full border bg-card/50 p-10">
-                <h3 className="text-2xl text-gold">{title as string}</h3>
-                <ul className="mt-6 space-y-3">
+              <div className="h-full border border-border/60 bg-card/50 p-10 shadow-sm hover:border-gold/50 transition-colors">
+                <div className="text-xs uppercase tracking-[0.25em] text-gold/80 mb-2">Step 0{i + 1}</div>
+                <h3 className="text-2xl text-gold font-display">{title as string}</h3>
+                <ul className="mt-6 space-y-3.5">
                   {(items as string[]).map((it) => (
-                    <li key={it} className="flex gap-3 text-foreground/85">
+                    <li key={it} className="flex gap-3 text-foreground/85 text-base">
                       <Check className="mt-1 h-4 w-4 shrink-0 text-gold" /> {it}
                     </li>
                   ))}
@@ -415,15 +476,15 @@ export function PurchaseSupport() {
           ))}
         </div>
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-5">
+        <div className="mt-12 grid gap-8 lg:grid-cols-5">
           <Reveal className="lg:col-span-3">
-            <div className="washi h-full p-10">
-              <h3 className="text-3xl">{s.pricing}</h3>
+            <div className="washi h-full p-10 shadow-sm">
+              <h3 className="text-3xl font-display">{s.pricing}</h3>
               <div className="mt-8 divide-y divide-washi-foreground/15">
                 {s.tiers.map(([range, p]) => (
                   <div key={range} className="flex items-baseline justify-between py-4">
-                    <span className="text-washi-foreground/75">{range}</span>
-                    <span className="font-display text-3xl">{p}</span>
+                    <span className="text-washi-foreground/75 font-medium">{range}</span>
+                    <span className="font-display text-3xl text-cedar">{p}</span>
                   </div>
                 ))}
               </div>
@@ -431,35 +492,47 @@ export function PurchaseSupport() {
               <div className="mt-8 grid gap-4 sm:grid-cols-3">
                 {s.extras.map(([k, v]) => (
                   <div key={k} className="border-t border-cedar/40 pt-3">
-                    <div className="text-xs uppercase tracking-widest text-cedar">{k}</div>
-                    <div className="mt-1 text-sm">{v}</div>
+                    <div className="text-xs uppercase tracking-widest text-cedar font-semibold">{k}</div>
+                    <div className="mt-1 text-sm text-washi-foreground/80 leading-snug">{v}</div>
                   </div>
                 ))}
               </div>
             </div>
           </Reveal>
           <Reveal className="lg:col-span-2" delay={120}>
-            <div className="h-full border border-gold/40 p-10">
-              <h3 className="text-2xl text-gold">{s.calc}</h3>
+            <div className="h-full border border-gold/40 bg-card/60 p-10 shadow-elegant">
+              <h3 className="text-2xl text-gold font-display">{s.calc}</h3>
               <label className="mt-6 block text-xs uppercase tracking-widest text-muted-foreground" htmlFor="price">
                 {s.calcLabel}
               </label>
-              <div className="mt-2 font-display text-4xl">{fmt(price)}</div>
+              <div className="mt-2 font-display text-4xl text-foreground">{fmt(price)}</div>
               <input
                 id="price"
                 type="range"
-                min={1000}
-                max={150000}
-                step={1000}
+                min={2000}
+                max={180000}
+                step={2000}
                 value={price}
                 onChange={(e) => setPrice(Number(e.target.value))}
                 className="mt-4 w-full accent-[var(--gold)]"
               />
-              <dl className="mt-8 space-y-3 text-sm">
-                <div className="flex justify-between"><dt>{s.calcFee}</dt><dd className="font-display text-2xl text-gold">{fmt(fee)}</dd></div>
-                <div className="flex justify-between text-muted-foreground"><dt>{s.calcDeposit}</dt><dd>{fmt(deposit)}</dd></div>
-                <div className="flex justify-between text-muted-foreground"><dt>{s.calcBalance}</dt><dd>{fmt(balance)}</dd></div>
+              <dl className="mt-8 space-y-4 text-sm border-t border-border/40 pt-6">
+                <div className="flex justify-between items-baseline">
+                  <dt className="text-foreground/90 font-medium">{s.calcFee}</dt>
+                  <dd className="font-display text-3xl text-gold font-bold">{fmt(fee)}</dd>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <dt>{s.calcDeposit}</dt>
+                  <dd className="font-mono">{fmt(deposit)}</dd>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <dt>{s.calcBalance}</dt>
+                  <dd className="font-mono">{fmt(balance)}</dd>
+                </div>
               </dl>
+              <div className="mt-8 pt-4">
+                <GoldButton to="/book">Inquire About Purchase Support</GoldButton>
+              </div>
             </div>
           </Reveal>
         </div>
@@ -468,7 +541,7 @@ export function PurchaseSupport() {
   );
 }
 
-/* ---------------- Listing check with simulated checkout ---------------- */
+/* ---------------- 03 Listing check with simulated checkout ---------------- */
 const listingSchema = z.object({
   name: z.string().trim().min(1).max(100),
   email: z.string().trim().email().max(255),
@@ -484,8 +557,13 @@ export function ListingCheck() {
   const s = t.services;
   const f = t.form;
   const [stage, setStage] = useState<"form" | "pay" | "done">("form");
+  const [selectedPlan, setSelectedPlan] = useState<"check" | "tour">("check");
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [card, setCard] = useState({ num: "", exp: "", cvc: "" });
+
+  const activePrice = selectedPlan === "check" ? LISTING_CHECK_PRICE : TOUR_VISIT_PRICE;
+  const activePriceLabel = `${activePrice} CHF`;
+  const activePlanTitle = selectedPlan === "check" ? s.s2Option1Title : s.s2Option2Title;
 
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -498,6 +576,7 @@ export function ListingCheck() {
     setErrors({});
     setStage("pay");
   };
+
   const pay = (e: FormEvent) => {
     e.preventDefault();
     const ok = {
@@ -518,69 +597,181 @@ export function ListingCheck() {
       <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-2">
         <Reveal>
           <div className="flex items-baseline gap-6">
-            <span className="font-display text-7xl text-gold/30">02</span>
+            <span className="font-display text-7xl text-gold/30">03</span>
             <h2 className="text-4xl md:text-5xl">{s.s2}</h2>
           </div>
-          <p className="mt-8 font-display text-3xl leading-snug text-gold">{s.s2Title}</p>
+          <p className="mt-4 text-xs uppercase tracking-[0.3em] text-gold font-semibold">{s.s2Subtitle}</p>
+          <p className="mt-4 font-display text-2xl md:text-3xl leading-snug text-foreground/90">{s.s2Title}</p>
+          
           <div className="mt-8 text-xs uppercase tracking-[0.3em] text-muted-foreground">{s.s2Included}</div>
           <ul className="mt-4 space-y-3">
             {s.s2Items.map((it) => (
-              <li key={it} className="flex gap-3"><Check className="mt-1 h-4 w-4 shrink-0 text-gold" />{it}</li>
+              <li key={it} className="flex gap-3 text-foreground/85">
+                <Check className="mt-1 h-4 w-4 shrink-0 text-gold" />
+                <span>{it}</span>
+              </li>
             ))}
           </ul>
-          <div className="mt-10 inline-flex items-baseline gap-4 border border-gold/40 px-8 py-5">
-            <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">{s.fixed}</span>
-            <span className="font-display text-5xl text-gold-gradient">€{LISTING_CHECK_PRICE}</span>
+
+          {/* Gold edged squares for 75 CHF & 320 CHF */}
+          <div className="mt-10 space-y-4">
+            {/* 75 CHF Gold-edged square */}
+            <div 
+              onClick={() => setSelectedPlan("check")}
+              className={cn(
+                "cursor-pointer rounded border p-6 transition-all duration-300",
+                selectedPlan === "check"
+                  ? "border-gold bg-gold/10 shadow-elegant ring-1 ring-gold/60"
+                  : "border-gold/40 bg-card/40 hover:border-gold/70"
+              )}
+            >
+              <div className="flex items-baseline justify-between gap-4">
+                <div className="text-xs uppercase tracking-[0.25em] text-gold font-semibold">
+                  {s.s2Option1Title}
+                </div>
+                <div className="font-display text-3xl font-bold text-gold">
+                  {s.s2Option1Price}
+                </div>
+              </div>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                {s.s2Option1Desc}
+              </p>
+            </div>
+
+            {/* 320 CHF Gold-bordered square */}
+            <div 
+              onClick={() => setSelectedPlan("tour")}
+              className={cn(
+                "cursor-pointer rounded border p-6 transition-all duration-300",
+                selectedPlan === "tour"
+                  ? "border-gold bg-gold/10 shadow-elegant ring-1 ring-gold/60"
+                  : "border-border/60 bg-card/40 hover:border-gold/60"
+              )}
+            >
+              <div className="flex items-baseline justify-between gap-4">
+                <div className="text-xs uppercase tracking-[0.25em] text-foreground font-semibold">
+                  {s.s2Option2Title}
+                </div>
+                <div className="font-display text-3xl font-bold text-foreground">
+                  {s.s2Option2Price}
+                </div>
+              </div>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                {s.s2Option2Desc}
+              </p>
+            </div>
           </div>
         </Reveal>
+
         <Reveal delay={120}>
-          <div className="border bg-card/60 p-8 shadow-elegant md:p-10">
+          <div className="border bg-card/60 p-8 shadow-elegant md:p-10 sticky top-28">
             {stage === "form" && (
               <form onSubmit={submit} className="space-y-6" noValidate>
-                <h3 className="text-2xl">{s.order}</h3>
+                <div>
+                  <h3 className="text-2xl font-display">{s.order}</h3>
+                  <div className="mt-3 flex items-center justify-between rounded border border-gold/40 bg-gold/10 px-4 py-2.5">
+                    <span className="text-xs uppercase tracking-wider text-gold font-semibold">{activePlanTitle}</span>
+                    <span className="font-display text-xl font-bold text-gold">{activePriceLabel}</span>
+                  </div>
+                </div>
+
                 {(["name", "email", "link"] as const).map((k) => (
                   <div key={k}>
-                    <input name={k} type={k === "email" ? "email" : k === "link" ? "url" : "text"} placeholder={f[k]} className={inputCls} maxLength={k === "link" ? 1000 : 255} />
+                    <input
+                      name={k}
+                      type={k === "email" ? "email" : k === "link" ? "url" : "text"}
+                      placeholder={f[k]}
+                      className={inputCls}
+                      maxLength={k === "link" ? 1000 : 255}
+                    />
                     {errors[k] && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
                   </div>
                 ))}
-                <textarea name="message" placeholder={f.message} rows={3} maxLength={1000} className={inputCls} />
-                <button className="w-full bg-gold-gradient py-4 text-xs font-semibold uppercase tracking-[0.25em] text-primary-foreground">
-                  {f.continue}
+                <textarea
+                  name="message"
+                  placeholder={f.message}
+                  rows={3}
+                  maxLength={1000}
+                  className={inputCls}
+                />
+                <button className="w-full bg-gold-gradient py-4 text-xs font-semibold uppercase tracking-[0.25em] text-primary-foreground shadow-elegant hover:brightness-110 transition-all">
+                  {f.continue} ({activePriceLabel})
                 </button>
               </form>
             )}
+
             {stage === "pay" && (
               <form onSubmit={pay} className="space-y-6" noValidate>
-                <div className="flex items-center justify-between">
-                  <h3 className="text-2xl">{s.s2}</h3>
-                  <span className="font-display text-3xl text-gold">€{LISTING_CHECK_PRICE}</span>
+                <div className="flex items-center justify-between border-b border-border/40 pb-4">
+                  <div>
+                    <h3 className="text-xl font-display">{activePlanTitle}</h3>
+                    <p className="text-xs text-muted-foreground">Fixed verified service</p>
+                  </div>
+                  <span className="font-display text-3xl text-gold font-bold">{activePriceLabel}</span>
                 </div>
                 <div>
-                  <input placeholder={f.card} inputMode="numeric" maxLength={19} value={card.num} onChange={(e) => setCard({ ...card, num: e.target.value.replace(/[^\d ]/g, "") })} className={inputCls} />
+                  <input
+                    placeholder={f.card}
+                    inputMode="numeric"
+                    maxLength={19}
+                    value={card.num}
+                    onChange={(e) => setCard({ ...card, num: e.target.value.replace(/[^\d ]/g, "") })}
+                    className={inputCls}
+                  />
                   {errors["num"] && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
                 </div>
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <input placeholder={f.expiry} maxLength={5} value={card.exp} onChange={(e) => setCard({ ...card, exp: e.target.value })} className={inputCls} />
+                    <input
+                      placeholder={f.expiry}
+                      maxLength={5}
+                      value={card.exp}
+                      onChange={(e) => setCard({ ...card, exp: e.target.value })}
+                      className={inputCls}
+                    />
                     {errors["exp"] && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
                   </div>
                   <div>
-                    <input placeholder={f.cvc} inputMode="numeric" maxLength={4} value={card.cvc} onChange={(e) => setCard({ ...card, cvc: e.target.value.replace(/\D/g, "") })} className={inputCls} />
+                    <input
+                      placeholder={f.cvc}
+                      inputMode="numeric"
+                      maxLength={4}
+                      value={card.cvc}
+                      onChange={(e) => setCard({ ...card, cvc: e.target.value.replace(/\D/g, "") })}
+                      className={inputCls}
+                    />
                     {errors["cvc"] && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">{f.secure}</p>
                 <div className="flex gap-4">
-                  <button type="button" onClick={() => setStage("form")} className="border px-6 py-4 text-xs uppercase tracking-[0.2em]">{f.back}</button>
-                  <button className="flex-1 bg-gold-gradient py-4 text-xs font-semibold uppercase tracking-[0.25em] text-primary-foreground">{f.pay}</button>
+                  <button
+                    type="button"
+                    onClick={() => setStage("form")}
+                    className="border px-6 py-4 text-xs uppercase tracking-[0.2em] hover:bg-gold/10 transition-colors"
+                  >
+                    {f.back}
+                  </button>
+                  <button className="flex-1 bg-gold-gradient py-4 text-xs font-semibold uppercase tracking-[0.25em] text-primary-foreground shadow-elegant hover:brightness-110 transition-all">
+                    {f.pay} {activePriceLabel}
+                  </button>
                 </div>
               </form>
             )}
+
             {stage === "done" && (
               <div className="py-10 text-center">
                 <ToriiEmblem className="mx-auto h-14 w-16 text-gold" />
-                <p className="mt-6 font-display text-2xl">{f.paid}</p>
+                <h4 className="mt-6 font-display text-2xl">{f.paid}</h4>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  We will analyze your listing and get back to you with the verification report within 48 hours.
+                </p>
+                <button
+                  onClick={() => setStage("form")}
+                  className="mt-6 text-xs uppercase tracking-wider text-gold hover:underline"
+                >
+                  Order another verification
+                </button>
               </div>
             )}
           </div>
