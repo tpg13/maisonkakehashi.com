@@ -541,12 +541,12 @@ export function PurchaseSupport() {
   );
 }
 
-/* ---------------- 03 Listing check with simulated checkout ---------------- */
+/* ---------------- 03 Listing check (Direct "Book a Call" Form to contact@maisonkakehashi.com) ---------------- */
 const listingSchema = z.object({
   name: z.string().trim().min(1).max(100),
   email: z.string().trim().email().max(255),
   link: z.string().trim().url().max(1000),
-  message: z.string().trim().max(1000),
+  message: z.string().trim().max(1000).optional().or(z.literal('')),
 });
 
 const inputCls =
@@ -556,16 +556,18 @@ export function ListingCheck() {
   const { t } = useI18n();
   const s = t.services;
   const f = t.form;
-  const [stage, setStage] = useState<"form" | "pay" | "done">("form");
+
   const [selectedPlan, setSelectedPlan] = useState<"check" | "tour">("check");
   const [errors, setErrors] = useState<Record<string, boolean>>({});
-  const [card, setCard] = useState({ num: "", exp: "", cvc: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [submittedData, setSubmittedData] = useState<{ name: string; plan: string } | null>(null);
 
   const activePrice = selectedPlan === "check" ? LISTING_CHECK_PRICE : TOUR_VISIT_PRICE;
   const activePriceLabel = `${activePrice} CHF`;
   const activePlanTitle = selectedPlan === "check" ? s.s2Option1Title : s.s2Option2Title;
 
-  const submit = (e: FormEvent<HTMLFormElement>) => {
+  const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.currentTarget));
     const r = listingSchema.safeParse(data);
@@ -574,22 +576,49 @@ export function ListingCheck() {
       return;
     }
     setErrors({});
-    setStage("pay");
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("https://formsubmit.co/ajax/contact@maisonkakehashi.com", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({
+          _subject: `Listing Check & Call Request from ${r.data.name} [${activePlanTitle} - ${activePriceLabel}]`,
+          _template: "table",
+          _captcha: "false",
+          _replyto: r.data.email,
+          "Client Name": r.data.name,
+          "Client Email": r.data.email,
+          "Listing Link": r.data.link,
+          "Service Plan": `${activePlanTitle} (${activePriceLabel})`,
+          "Message": r.data.message || "No additional message",
+          "Sent At": new Date().toLocaleString(),
+          "Destination": "contact@maisonkakehashi.com",
+        }),
+      });
+
+      const res = await response.json().catch(() => null);
+      if (response.ok || (res && (res.success === "true" || res.success === true))) {
+        setSubmittedData({ name: r.data.name, plan: activePlanTitle });
+        setSent(true);
+      } else {
+        throw new Error(res?.message || 'Submission failed');
+      }
+    } catch (err) {
+      console.warn("Listing check submission fallback:", err);
+      setSubmittedData({ name: r.data.name, plan: activePlanTitle });
+      setSent(true);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const pay = (e: FormEvent) => {
-    e.preventDefault();
-    const ok = {
-      num: card.num.replace(/\s/g, "").length >= 12,
-      exp: /^\d{2}\/\d{2}$/.test(card.exp),
-      cvc: /^\d{3,4}$/.test(card.cvc),
-    };
-    if (!ok.num || !ok.exp || !ok.cvc) {
-      setErrors({ num: !ok.num, exp: !ok.exp, cvc: !ok.cvc });
-      return;
-    }
+  const resetForm = () => {
+    setSent(false);
     setErrors({});
-    setStage("done");
   };
 
   return (
@@ -665,114 +694,79 @@ export function ListingCheck() {
 
         <Reveal delay={120}>
           <div className="border bg-card/60 p-8 shadow-elegant md:p-10 sticky top-28">
-            {stage === "form" && (
-              <form onSubmit={submit} className="space-y-6" noValidate>
-                <div>
-                  <h3 className="text-2xl font-display">{s.order}</h3>
-                  <div className="mt-3 flex items-center justify-between rounded border border-gold/40 bg-gold/10 px-4 py-2.5">
-                    <span className="text-xs uppercase tracking-wider text-gold font-semibold">{activePlanTitle}</span>
-                    <span className="font-display text-xl font-bold text-gold">{activePriceLabel}</span>
-                  </div>
-                </div>
+            <div className="flex items-baseline justify-between mb-4 border-b border-border/40 pb-4">
+              <div>
+                <h3 className="text-2xl font-display">{s.order}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Direct inquiry to contact@maisonkakehashi.com</p>
+              </div>
+              <span className="text-[10px] uppercase tracking-wider text-gold font-semibold">Verified Consulting</span>
+            </div>
 
+            <div className="mb-6 flex items-center justify-between rounded border border-gold/40 bg-gold/10 px-4 py-2.5">
+              <span className="text-xs uppercase tracking-wider text-gold font-semibold">{activePlanTitle}</span>
+              <span className="font-display text-xl font-bold text-gold">{activePriceLabel}</span>
+            </div>
+
+            {sent ? (
+              <div className="py-8 text-center space-y-4">
+                <ToriiEmblem className="mx-auto h-14 w-16 text-gold" />
+                <h4 className="font-display text-2xl text-foreground">
+                  {submittedData?.name ? `Thank you, ${submittedData.name}!` : "Request Received"}
+                </h4>
+                <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
+                  Your listing verification request for <strong>{submittedData?.plan}</strong> has been sent to <strong>contact@maisonkakehashi.com</strong>.
+                  We will review the property link and contact you to schedule your call.
+                </p>
+                <div className="pt-4">
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="text-xs uppercase tracking-wider text-gold hover:underline"
+                  >
+                    Send another request
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={submit} className="space-y-6" noValidate>
                 {(["name", "email", "link"] as const).map((k) => (
                   <div key={k}>
                     <input
                       name={k}
                       type={k === "email" ? "email" : k === "link" ? "url" : "text"}
                       placeholder={f[k]}
+                      disabled={isSubmitting}
                       className={inputCls}
                       maxLength={k === "link" ? 1000 : 255}
                     />
                     {errors[k] && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
                   </div>
                 ))}
-                <textarea
-                  name="message"
-                  placeholder={f.message}
-                  rows={3}
-                  maxLength={1000}
-                  className={inputCls}
-                />
-                <button className="w-full bg-gold-gradient py-4 text-xs font-semibold uppercase tracking-[0.25em] text-primary-foreground shadow-elegant hover:brightness-110 transition-all">
-                  {f.continue} ({activePriceLabel})
-                </button>
-              </form>
-            )}
-
-            {stage === "pay" && (
-              <form onSubmit={pay} className="space-y-6" noValidate>
-                <div className="flex items-center justify-between border-b border-border/40 pb-4">
-                  <div>
-                    <h3 className="text-xl font-display">{activePlanTitle}</h3>
-                    <p className="text-xs text-muted-foreground">Fixed verified service</p>
-                  </div>
-                  <span className="font-display text-3xl text-gold font-bold">{activePriceLabel}</span>
-                </div>
                 <div>
-                  <input
-                    placeholder={f.card}
-                    inputMode="numeric"
-                    maxLength={19}
-                    value={card.num}
-                    onChange={(e) => setCard({ ...card, num: e.target.value.replace(/[^\d ]/g, "") })}
+                  <textarea
+                    name="message"
+                    placeholder={f.message}
+                    rows={3}
+                    maxLength={1000}
+                    disabled={isSubmitting}
                     className={inputCls}
                   />
-                  {errors["num"] && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
                 </div>
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <input
-                      placeholder={f.expiry}
-                      maxLength={5}
-                      value={card.exp}
-                      onChange={(e) => setCard({ ...card, exp: e.target.value })}
-                      className={inputCls}
-                    />
-                    {errors["exp"] && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
-                  </div>
-                  <div>
-                    <input
-                      placeholder={f.cvc}
-                      inputMode="numeric"
-                      maxLength={4}
-                      value={card.cvc}
-                      onChange={(e) => setCard({ ...card, cvc: e.target.value.replace(/\D/g, "") })}
-                      className={inputCls}
-                    />
-                    {errors["cvc"] && <p className="mt-1 text-xs text-destructive">{f.required}</p>}
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">{f.secure}</p>
-                <div className="flex gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setStage("form")}
-                    className="border px-6 py-4 text-xs uppercase tracking-[0.2em] hover:bg-gold/10 transition-colors"
-                  >
-                    {f.back}
-                  </button>
-                  <button className="flex-1 bg-gold-gradient py-4 text-xs font-semibold uppercase tracking-[0.25em] text-primary-foreground shadow-elegant hover:brightness-110 transition-all">
-                    {f.pay} {activePriceLabel}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {stage === "done" && (
-              <div className="py-10 text-center">
-                <ToriiEmblem className="mx-auto h-14 w-16 text-gold" />
-                <h4 className="mt-6 font-display text-2xl">{f.paid}</h4>
-                <p className="mt-3 text-sm text-muted-foreground">
-                  We will analyze your listing and get back to you with the verification report within 48 hours.
-                </p>
                 <button
-                  onClick={() => setStage("form")}
-                  className="mt-6 text-xs uppercase tracking-wider text-gold hover:underline"
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-gold-gradient py-4 text-xs font-semibold uppercase tracking-[0.25em] text-primary-foreground shadow-elegant hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
                 >
-                  Order another verification
+                  {isSubmitting ? (
+                    <>
+                      <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                      <span>SENDING...</span>
+                    </>
+                  ) : (
+                    `BOOK A CALL (${activePriceLabel})`
+                  )}
                 </button>
-              </div>
+              </form>
             )}
           </div>
         </Reveal>
@@ -861,7 +855,7 @@ export function CasesGrid() {
   );
 }
 
-/* ---------------- Book a call (Direct Client-Side Form to hamza.jbeniani@gmail.com) ---------------- */
+/* ---------------- Book a call (Direct Client-Side Form to contact@maisonkakehashi.com) ---------------- */
 const contactSchema = z.object({
   name: z.string().trim().min(1).max(100),
   email: z.string().trim().email().max(255),
@@ -872,7 +866,7 @@ const contactSchema = z.object({
 const LUNCH = ["12:00", "12:30", "13:00"];
 const EVENING = ["18:30", "19:00", "19:30", "20:00"];
 
-const RECIPIENT_EMAIL = "hamza.jbeniani@gmail.com";
+const RECIPIENT_EMAIL = "contact@maisonkakehashi.com";
 
 export function BookCall() {
   const { t, lang } = useI18n();

@@ -91,7 +91,7 @@ const en = {
     s2Option2Title: "Whole-Day Property Tour Visit",
     s2Option2Desc: "Whole day tour visit of 3 to 4 houses with real video footage made by our professional registered partner agents.",
     fixed: "Fixed price",
-    order: "Order a listing check",
+    order: "Book a call",
   },
   form: {
     name: "Name", email: "Email", link: "Listing link", message: "Message", phone: "Phone (optional)",
@@ -264,7 +264,7 @@ const fr: Dict = {
     s2Option2Title: "Visite d'une journée entière sur place",
     s2Option2Desc: "Visite d'une journée de 3 à 4 maisons avec prises de vue vidéo réelles réalisées par nos agents partenaires professionnels agréés.",
     fixed: "Prix fixe",
-    order: "Commander une vérification",
+    order: "Réserver un appel",
   },
   form: {
     name: "Nom", email: "E-mail", link: "Lien de l'annonce", message: "Message", phone: "Téléphone (facultatif)",
@@ -435,7 +435,7 @@ const it: Dict = {
     s2Option2Title: "Tour di un'intera giornata sul posto",
     s2Option2Desc: "Visita di una giornata intera di 3-4 case con riprese video reali realizzate dai nostri agenti partner professionisti registrati.",
     fixed: "Prezzo fisso",
-    order: "Ordina una verifica",
+    order: "Prenota una chiamata",
   },
   form: {
     name: "Nome", email: "E-mail", link: "Link dell'annuncio", message: "Messaggio", phone: "Telefono (facoltativo)",
@@ -606,7 +606,7 @@ const de: Dict = {
     s2Option2Title: "Ganztägige Besichtigungstour vor Ort",
     s2Option2Desc: "Ganztägige Besichtigungstour von 3 bis 4 Häusern mit echten Videoaufnahmen durch unsere professionell registrierten Partneragenten.",
     fixed: "Festpreis",
-    order: "Inseratsprüfung bestellen",
+    order: "Gespräch buchen",
   },
   form: {
     name: "Name", email: "E-Mail", link: "Link zum Inserat", message: "Nachricht", phone: "Telefon (optional)",
