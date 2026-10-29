@@ -16,6 +16,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { I18nProvider } from "@/lib/i18n";
 import { CurrencyProvider } from "@/lib/currency";
 import { SiteFooter, SiteHeader } from "@/components/site";
+import { MomijiLeaves } from "@/components/MomijiLeaves";
+import { AmbientPlayer } from "@/components/AmbientPlayer";
 
 function NotFoundComponent() {
   return (
@@ -130,11 +132,13 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
         <CurrencyProvider>
+          <MomijiLeaves />
           <SiteHeader />
           <main>
             <Outlet />
           </main>
           <SiteFooter />
+          <AmbientPlayer />
         </CurrencyProvider>
       </I18nProvider>
     </QueryClientProvider>
