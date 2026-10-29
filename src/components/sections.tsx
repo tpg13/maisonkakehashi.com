@@ -952,41 +952,26 @@ export function BookCall() {
     const selectedSlotText = activeSlotString ? activeSlotString : "No slot selected (Direct message)";
 
     try {
-      // 100% Pure React client-side submission with no backend required
-      const response = await fetch(`https://formsubmit.co/ajax/${RECIPIENT_EMAIL}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
+      const sendResult = await sendInquiry(
+        {
+          name: r.data.name,
+          email: r.data.email,
+          phone: r.data.phone || "",
+          slot: selectedSlotText,
+          message: r.data.message,
         },
-        body: JSON.stringify({
-          _subject: `Maison Kakehashi Inquiry from ${r.data.name} [${selectedSlotText}]`,
-          _template: "table",
-          _captcha: "false",
-          _replyto: r.data.email,
-          "Client Name": r.data.name,
-          "Client Email": r.data.email,
-          "Client Phone": r.data.phone || "Not specified",
-          "Selected Slot": selectedSlotText,
-          "Message": r.data.message,
-          "Sent At": new Date().toLocaleString(),
-          "Destination": RECIPIENT_EMAIL,
-        }),
+        "Discovery Call Inquiry"
+      );
+
+      setSubmittedData({
+        name: r.data.name,
+        slot: activeSlotString,
+        result: sendResult,
       });
-
-      const result = await response.json().catch(() => null);
-
-      if (response.ok || (result && (result.success === "true" || result.success === true))) {
-        setSubmittedData({ name: r.data.name, slot: activeSlotString });
-        setSent(true);
-      } else {
-        throw new Error(result?.message || 'Submission failed');
-      }
-    } catch (err: any) {
-      console.warn('FormSubmit AJAX attempt result:', err);
-      // Fallback display confirmation so user knows their message was processed
-      setSubmittedData({ name: r.data.name, slot: activeSlotString });
       setSent(true);
+    } catch (err: any) {
+      console.error("Submission error:", err);
+      setSubmitError("Failed to submit. Please use the direct email option below.");
     } finally {
       setIsSubmitting(false);
     }
@@ -1088,20 +1073,61 @@ export function BookCall() {
 
             {sent ? (
               <div className="mt-8 space-y-4">
-                <div className="h-12 w-12 rounded-full bg-cedar/15 text-cedar flex items-center justify-center font-bold text-2xl">
-                  ✓
-                </div>
-                <h4 className="font-display text-2xl text-foreground">
-                  {submittedData?.name ? `Thank you, ${submittedData.name}!` : f.sent}
-                </h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Your information has been sent directly to <strong>{RECIPIENT_EMAIL}</strong>.
-                  {submittedData?.slot && (
-                    <span className="block mt-2 text-gold font-medium">
-                      Requested Slot: {submittedData.slot}
-                    </span>
-                  )}
-                </p>
+                {submittedData?.result?.success ? (
+                  <>
+                    <div className="h-12 w-12 rounded-full bg-cedar/15 text-cedar flex items-center justify-center font-bold text-2xl">
+                      ✓
+                    </div>
+                    <h4 className="font-display text-2xl text-foreground">
+                      {submittedData?.name ? `Thank you, ${submittedData.name}!` : f.sent}
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Your information has been sent directly to <strong>{RECIPIENT_EMAIL}</strong>.
+                      {submittedData?.slot && (
+                        <span className="block mt-2 text-gold font-medium">
+                          Requested Slot: {submittedData.slot}
+                        </span>
+                      )}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div className="h-12 w-12 rounded-full bg-gold/15 text-gold flex items-center justify-center font-bold text-2xl">
+                      ✉
+                    </div>
+                    <h4 className="font-display text-2xl text-foreground">
+                      {submittedData?.name ? `Thank you, ${submittedData.name}!` : f.sent}
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Your message is prepared for <strong>{RECIPIENT_EMAIL}</strong>.
+                      {submittedData?.slot && (
+                        <span className="block mt-2 text-gold font-medium">
+                          Requested Slot: {submittedData.slot}
+                        </span>
+                      )}
+                    </p>
+                    <div className="pt-2 flex flex-col gap-3">
+                      <a
+                        href={submittedData?.result?.mailtoUrl}
+                        className="w-full bg-washi-foreground py-3.5 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-washi hover:opacity-90 transition-all inline-block text-center"
+                      >
+                        Send via Email ({RECIPIENT_EMAIL})
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (submittedData?.result?.formattedBody) {
+                            navigator.clipboard.writeText(submittedData.result.formattedBody);
+                            alert("Message copied to clipboard!");
+                          }
+                        }}
+                        className="border border-washi-foreground/30 py-2.5 px-4 text-xs uppercase tracking-wider text-washi-foreground hover:bg-washi-foreground/10 transition-colors"
+                      >
+                        Copy Message to Clipboard
+                      </button>
+                    </div>
+                  </>
+                )}
                 <div className="pt-4">
                   <button
                     type="button"
