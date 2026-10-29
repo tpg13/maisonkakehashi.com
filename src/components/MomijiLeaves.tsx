@@ -1,108 +1,133 @@
 import { useMemo, useEffect, useState } from "react";
 
-// SVG path for a detailed Japanese maple (momiji) leaf
-const MAPLE_LEAF_PATH =
-  "M12,2 C12,2 10,5 8,6 C6,7 4,6 3,8 C2,10 4,12 4,12 C4,12 2,14 3,16 C4,18 7,17 7,17 C7,17 7,20 9,21 C11,22 12,20 12,20 C12,20 13,22 15,21 C17,20 17,17 17,17 C17,17 20,18 21,16 C22,14 20,12 20,12 C20,12 22,10 21,8 C20,6 18,7 16,6 C14,5 12,2 12,2 Z";
+// Accurate 7-lobe Japanese red maple (momiji) leaf path — as specified
+const MOMIJI_PATH =
+  "M50 95 L48 70 C48 70 42 60 35 55 C25 48 5 45 5 45 C5 45 22 42 32 38 C40 34 45 25 45 25 C45 25 44 15 47 5 C50 15 51 25 51 25 C51 25 58 34 66 38 C76 42 95 45 95 45 C95 45 75 48 65 55 C58 60 52 70 52 70 Z";
+
+const COLORS: { fill: string; opacity: number }[] = [
+  { fill: "#C0392B", opacity: 0.72 },
+  { fill: "#900C3F", opacity: 0.65 },
+  { fill: "#B71C1C", opacity: 0.70 },
+  { fill: "#D4AF37", opacity: 0.55 },
+  { fill: "#C0392B", opacity: 0.80 },
+  { fill: "#900C3F", opacity: 0.60 },
+  { fill: "#A93226", opacity: 0.68 },
+  { fill: "#D4AF37", opacity: 0.50 },
+];
 
 type Leaf = {
-  id: number;
-  x: number; // percentage of container width
-  color: string;
-  size: number;
-  duration: number;
-  delay: number;
-  rotation: number;
-  swayAmount: number;
-  swaySpeed: number;
+  id: string;
+  x: number;       // % of container width — starting X
+  size: number;    // px
+  color: { fill: string; opacity: number };
+  fallDuration: number;   // s — total fall time
+  swayDuration: number;   // s — horizontal sway period
+  swayAmp: number;        // px — sway amplitude
+  swayPhase: number;      // deg — initial phase in sway
+  rotX: number;    // deg — 3-D tilt around X
+  rotY: number;    // deg — 3-D tilt around Y
+  rotZSpeed: number; // deg/s — spin speed
+  delay: number;   // s — animation start delay
   side: "left" | "right";
 };
 
-const COLORS = [
-  "#C0392B",
-  "#B71C1C",
-  "#D32F2F",
-  "#C62828",
-  "#D4AF37",
-  "#B7950B",
-  "#C0392B",
-  "#B71C1C",
-  "#D4AF37",
-];
-
-function randomBetween(min: number, max: number) {
+function rand(min: number, max: number) {
   return min + Math.random() * (max - min);
 }
 
-function generateLeaves(count: number, side: "left" | "right"): Leaf[] {
-  return Array.from({ length: count }, (_, i) => ({
-    id: i,
-    x: randomBetween(5, 90),
+function makeLeaves(n: number, side: "left" | "right"): Leaf[] {
+  return Array.from({ length: n }, (_, i) => ({
+    id: `${side}-${i}`,
+    x: rand(8, 88),
+    size: rand(18, 32),
     color: COLORS[Math.floor(Math.random() * COLORS.length)],
-    size: randomBetween(16, 28),
-    duration: randomBetween(7, 13),
-    delay: randomBetween(-12, 0),
-    rotation: randomBetween(0, 360),
-    swayAmount: randomBetween(12, 28),
-    swaySpeed: randomBetween(2.5, 4.5),
+    fallDuration: rand(8, 15),
+    swayDuration: rand(2.5, 4.5),
+    swayAmp: rand(18, 40),
+    swayPhase: rand(0, 360),
+    rotX: rand(-30, 30),
+    rotY: rand(-45, 45),
+    rotZSpeed: rand(-50, 50),
+    delay: rand(-14, 0),
     side,
   }));
 }
 
-function LeafParticle({ leaf }: { leaf: Leaf }) {
-  const keyframeName = `fall-${leaf.side}-${leaf.id}`;
+/* ─── Single leaf with inline keyframes ─── */
+function MomijiLeaf({ leaf }: { leaf: Leaf }) {
+  // Each leaf gets its own uniquely-named keyframe set so they are independent
+  const kFall = `mf-fall-${leaf.id}`;
+  const kSway = `mf-sway-${leaf.id}`;
+
+  const rotZEnd = leaf.rotZSpeed * leaf.fallDuration;
 
   return (
     <>
       <style>{`
-        @keyframes ${keyframeName} {
-          0% {
-            transform: translateY(-40px) rotate(${leaf.rotation}deg) translateX(0px);
-            opacity: 0;
-          }
-          8% {
-            opacity: 0.85;
-          }
-          50% {
-            transform: translateY(50vh) rotate(${leaf.rotation + 180}deg) translateX(${leaf.swayAmount}px);
-          }
-          100% {
-            transform: translateY(105vh) rotate(${leaf.rotation + 360}deg) translateX(${-leaf.swayAmount / 2}px);
-            opacity: 0;
-          }
+        @keyframes ${kFall} {
+          0%   { transform: translateY(-50px)
+                            rotateX(${leaf.rotX}deg)
+                            rotateY(${leaf.rotY}deg)
+                            rotateZ(0deg);
+                 opacity: 0; }
+          6%   { opacity: ${leaf.color.opacity}; }
+          50%  { transform: translateY(50vh)
+                            rotateX(${-leaf.rotX * 0.6}deg)
+                            rotateY(${-leaf.rotY}deg)
+                            rotateZ(${rotZEnd * 0.5}deg); }
+          94%  { opacity: ${leaf.color.opacity}; }
+          100% { transform: translateY(108vh)
+                            rotateX(${leaf.rotX * 0.3}deg)
+                            rotateY(${leaf.rotY * 0.5}deg)
+                            rotateZ(${rotZEnd}deg);
+                 opacity: 0; }
+        }
+        @keyframes ${kSway} {
+          0%   { margin-left: 0px; }
+          25%  { margin-left:  ${leaf.swayAmp}px; }
+          75%  { margin-left: ${-leaf.swayAmp}px; }
+          100% { margin-left: 0px; }
         }
       `}</style>
-      <svg
-        width={leaf.size}
-        height={leaf.size}
-        viewBox="0 0 24 24"
+      {/* Outer wrapper handles horizontal sway */}
+      <div
+        aria-hidden
         style={{
           position: "absolute",
           left: `${leaf.x}%`,
           top: 0,
-          animation: `${keyframeName} ${leaf.duration}s ${leaf.delay}s ease-in-out infinite`,
-          filter: `drop-shadow(0 1px 2px rgba(0,0,0,0.35))`,
-          willChange: "transform, opacity",
+          animation: `${kSway} ${leaf.swayDuration}s ${leaf.delay}s ease-in-out infinite`,
+          willChange: "margin-left",
           pointerEvents: "none",
         }}
-        aria-hidden
       >
-        <path d={MAPLE_LEAF_PATH} fill={leaf.color} />
-        {/* Leaf vein details */}
-        <path
-          d="M12,2 L12,20 M12,11 L7,8 M12,11 L17,8 M12,14 L8,12 M12,14 L16,12"
-          stroke={leaf.color === "#D4AF37" || leaf.color === "#B7950B" ? "#8B6914" : "#8B1A1A"}
-          strokeWidth="0.5"
-          strokeLinecap="round"
-          opacity="0.5"
-          fill="none"
-        />
-      </svg>
+        {/* Inner wrapper handles vertical fall + 3-D rotation */}
+        <svg
+          width={leaf.size}
+          height={leaf.size}
+          viewBox="0 0 100 100"
+          style={{
+            animation: `${kFall} ${leaf.fallDuration}s ${leaf.delay}s ease-in infinite`,
+            fill: leaf.color.fill,
+            filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.4))",
+            willChange: "transform, opacity",
+            transformOrigin: "center center",
+            display: "block",
+            pointerEvents: "none",
+          }}
+          aria-hidden
+        >
+          <path d={MOMIJI_PATH} />
+        </svg>
+      </div>
     </>
   );
 }
 
-function LeafContainer({ side }: { side: "left" | "right" }) {
-  const leaves = useMemo(() => generateLeaves(12, side), [side]);
+/* ─── Left / right side column ─── */
+function LeafColumn({ side }: { side: "left" | "right" }) {
+  // useMemo so leaves are stable between renders but differ per side
+  const leaves = useMemo(() => makeLeaves(14, side), [side]);
 
   return (
     <div
@@ -111,24 +136,25 @@ function LeafContainer({ side }: { side: "left" | "right" }) {
         position: "fixed",
         top: 0,
         [side]: 0,
-        width: "clamp(40px, calc((100vw - 1280px) / 2), 120px)",
+        width: "clamp(48px, calc((100vw - 1280px) / 2), 130px)",
         height: "100vh",
         pointerEvents: "none",
         zIndex: 9,
         overflow: "hidden",
+        perspective: "600px",
       }}
     >
       {leaves.map((leaf) => (
-        <LeafParticle key={leaf.id} leaf={leaf} />
+        <MomijiLeaf key={leaf.id} leaf={leaf} />
       ))}
     </div>
   );
 }
 
+/* ─── Public component ─── */
 export function MomijiLeaves() {
   const [visible, setVisible] = useState(false);
 
-  // Only show on wide screens where side margins actually exist
   useEffect(() => {
     const check = () => setVisible(window.innerWidth > 1340);
     check();
@@ -140,8 +166,8 @@ export function MomijiLeaves() {
 
   return (
     <>
-      <LeafContainer side="left" />
-      <LeafContainer side="right" />
+      <LeafColumn side="left" />
+      <LeafColumn side="right" />
     </>
   );
 }

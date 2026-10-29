@@ -195,6 +195,11 @@
   50%       { transform: scale(1.12); opacity: 0; }
 }
 
+@keyframes ambi-ring {
+  0%, 100% { transform: scale(1);    opacity: 0.55; }
+  50%       { transform: scale(1.18); opacity: 0; }
+}
+
 @keyframes eq-bar {
   from { transform: scaleY(0.4); }
   to   { transform: scaleY(1.0); }
