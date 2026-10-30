@@ -489,16 +489,23 @@ export function PurchaseSupport() {
             [s.step2, s.step2Items],
           ].map(([title, items], i) => (
             <Reveal key={i} delay={i * 120}>
-              <div className="h-full border border-border/60 bg-card/50 p-10 shadow-sm hover:border-gold/50 transition-colors">
-                <div className="text-xs uppercase tracking-[0.25em] text-gold/80 mb-2">Step 0{i + 1}</div>
-                <h3 className="text-2xl text-gold font-display">{title as string}</h3>
-                <ul className="mt-6 space-y-3.5">
-                  {(items as string[]).map((it) => (
-                    <li key={it} className="flex gap-3 text-foreground/85 text-base">
-                      <Check className="mt-1 h-4 w-4 shrink-0 text-gold" /> {it}
-                    </li>
-                  ))}
-                </ul>
+              <div className="h-full border border-border/60 bg-card/50 p-10 shadow-sm hover:border-gold/50 transition-colors flex flex-col justify-between">
+                <div>
+                  <div className="text-xs uppercase tracking-[0.25em] text-gold/80 mb-2">Step 0{i + 1}</div>
+                  <h3 className="text-2xl text-gold font-display">{title as string}</h3>
+                  <ul className="mt-6 space-y-3.5">
+                    {(items as string[]).map((it) => (
+                      <li key={it} className="flex gap-3 text-foreground/85 text-base">
+                        <Check className="mt-1 h-4 w-4 shrink-0 text-gold" /> {it}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                {i === 1 && s.step2AgencyDisclaimer && (
+                  <p className="mt-8 pt-5 border-t border-border/40 text-xs text-muted-foreground/80 leading-relaxed italic">
+                    * {s.step2AgencyDisclaimer}
+                  </p>
+                )}
               </div>
             </Reveal>
           ))}
@@ -675,6 +682,11 @@ export function ListingCheck() {
               <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
                 {s.s2Option1Desc}
               </p>
+              {s.s2Option1Disclaimer && (
+                <p className="mt-3 text-xs text-muted-foreground/75 italic border-t border-border/30 pt-2">
+                  * {s.s2Option1Disclaimer}
+                </p>
+              )}
             </div>
 
             {/* 320 CHF Gold-bordered square */}
@@ -707,7 +719,7 @@ export function ListingCheck() {
           <div className="border bg-card/60 p-8 shadow-elegant md:p-10 sticky top-28">
             <div className="flex items-baseline justify-between mb-4 border-b border-border/40 pb-4">
               <div>
-                <h3 className="text-2xl font-display">{s.order}</h3>
+                <h3 className="text-2xl font-display">{selectedPlan === "check" ? s.orderListingCheck : s.order}</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">Direct inquiry to contact@maisonkakehashi.com</p>
               </div>
               <span className="text-[10px] uppercase tracking-wider text-gold font-semibold">Verified Consulting</span>
@@ -809,10 +821,17 @@ export function ListingCheck() {
                       <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
                       <span>SENDING...</span>
                     </>
+                  ) : selectedPlan === "check" ? (
+                    s.orderListingCheck
                   ) : (
                     `BOOK A CALL (${activePriceLabel})`
                   )}
                 </button>
+                {selectedPlan === "check" && s.s2Option1Disclaimer && (
+                  <p className="mt-3 text-center text-[11px] text-muted-foreground/75 italic">
+                    * {s.s2Option1Disclaimer}
+                  </p>
+                )}
               </form>
             )}
           </div>
