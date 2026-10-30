@@ -33,3 +33,7 @@ dist-ssr
 
 # Large original audio
 src/assets/bcm/
+
+# Archived properties & raw camera assets
+_archived_map_properties/
+*.mp4

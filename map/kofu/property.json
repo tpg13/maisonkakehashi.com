@@ -1,0 +1,32 @@
+{
+  "id": "kofu",
+  "title": "Kōfu Residence",
+  "japaneseTitle": "山梨県甲府市の邸宅",
+  "price": "",
+  "priceEur": "",
+  "priceEurAmount": 0,
+  "location": "Kōfu, Yamanashi Prefecture",
+  "region": "Chubu / Yamanashi",
+  "coordinates": [138.590317, 35.659228],
+  "type": "Detached House",
+  "status": "Verified Property",
+  "landArea": "250 m²",
+  "floorArea": "250 m²",
+  "yearBuilt": "2010",
+  "features": [
+    "Built in 2010",
+    "250 m² Living Space",
+    "Modern Japanese Construction",
+    "Scenic Kōfu Basin Location",
+    "On-Site Photo & Video Documentation"
+  ],
+  "description": "A modern Japanese detached residence located in Kōfu, Yamanashi Prefecture, offering 250 m² of living space and built in 2010. Thoroughly verified with authentic on-site photography by our local team.",
+  "images": [
+    "photo-01.jpg",
+    "photo-02.jpg",
+    "photo-03.jpg",
+    "photo-04.jpg",
+    "photo-05.jpg",
+    "photo-06.jpg"
+  ]
+}

@@ -58,7 +58,7 @@ function extractNumericEur(data: PropertyData): number {
     const num = parseFloat(cleaned);
     if (!isNaN(num) && num > 100000) return Math.round(num / 160);
   }
-  return 100000;
+  return 0;
 }
 
 export function getAllProperties(): LoadedProperty[] {
@@ -115,6 +115,6 @@ export function getAllProperties(): LoadedProperty[] {
     }
   }
 
-  // Sort properties so featured/latest (e.g. yamanashi-modern-renewal) appears first
-  return properties.sort((a, b) => (b.id === 'yamanashi-modern-renewal' ? 1 : 0) - (a.id === 'yamanashi-modern-renewal' ? 1 : 0));
+  // Sort properties so featured/latest appears first
+  return properties.sort((a, b) => (b.id === 'kofu' ? 1 : 0) - (a.id === 'kofu' ? 1 : 0));
 }

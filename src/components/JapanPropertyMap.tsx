@@ -125,7 +125,7 @@ function MobilePropertySheet({
     onNavigate(allProps[idx]!);
   };
 
-  const priceDisplay = prop.priceEurAmount > 0 ? formatEur(prop.priceEurAmount) : prop.price;
+  const priceDisplay = (prop.priceEurAmount && prop.priceEurAmount > 0) ? formatEur(prop.priceEurAmount) : (prop.price || '');
 
   return (
     <div className="fixed inset-0 z-[9990] bg-background flex flex-col">
@@ -202,9 +202,11 @@ function MobilePropertySheet({
         )}
 
         {/* Price overlay */}
-        <div className="absolute bottom-3 left-4">
-          <span className="font-display text-2xl font-bold text-white drop-shadow">{priceDisplay}</span>
-        </div>
+        {priceDisplay ? (
+          <div className="absolute bottom-3 left-4">
+            <span className="font-display text-2xl font-bold text-white drop-shadow">{priceDisplay}</span>
+          </div>
+        ) : null}
       </div>
 
       {/* Details — scrollable */}
@@ -290,8 +292,8 @@ export function JapanPropertyMap() {
 
   // Helper: get price label using currency converter
   const getPriceLabel = useCallback((prop: LoadedProperty): string => {
-    if (prop.priceEurAmount > 0) return formatEur(prop.priceEurAmount);
-    return prop.price;
+    if (prop.priceEurAmount && prop.priceEurAmount > 0) return formatEur(prop.priceEurAmount);
+    return prop.price || '';
   }, [formatEur]);
 
   // Render markers
@@ -302,9 +304,10 @@ export function JapanPropertyMap() {
     markersRef.current = {};
 
     propsList.forEach((prop) => {
-      const isFeatured = prop.id === 'yamanashi-modern-renewal';
+      const isFeatured = prop.id === 'yamanashi-modern-renewal' || prop.id === 'kofu';
       const hasMultipleImages = prop.imageUrls && prop.imageUrls.length > 1;
-      const priceLabel = prop.priceEurAmount > 0 ? formatEur(prop.priceEurAmount) : prop.price;
+      const priceLabel = (prop.priceEurAmount && prop.priceEurAmount > 0) ? formatEur(prop.priceEurAmount) : (prop.price || '');
+      const badgeText = priceLabel || prop.location.split(',')[0] || prop.title;
 
       // Custom HTML marker
       const el = document.createElement('div');
@@ -313,7 +316,7 @@ export function JapanPropertyMap() {
         <div class="relative flex flex-col items-center">
           <div class="mb-1.5 flex items-center gap-1.5 rounded-full border ${isFeatured ? 'border-amber-500 bg-amber-500 text-black shadow-xl scale-105 ring-2 ring-amber-400/50' : 'border-gold/70 bg-background/95 text-gold'} px-3 py-1 text-[11px] font-bold shadow-lg backdrop-blur transition-all duration-300 group-hover:scale-110 group-hover:bg-gold group-hover:text-background">
             <span class="inline-block h-2 w-2 rounded-full ${isFeatured ? 'bg-black' : 'bg-gold'} group-hover:bg-background animate-pulse"></span>
-            <span>${priceLabel}</span>
+            <span>${badgeText}</span>
             ${hasMultipleImages ? `<span class="opacity-80 text-[9px]">(${prop.imageUrls.length}📷)</span>` : ''}
           </div>
           <div class="relative flex h-8 w-8 items-center justify-center rounded-full border border-gold ${isFeatured ? 'bg-amber-500 text-black ring-4 ring-amber-400/30' : 'bg-card text-gold'} shadow-elegant transition-transform duration-300 group-hover:scale-125">
@@ -341,9 +344,10 @@ export function JapanPropertyMap() {
                 <button id="popup-prev-${prop.id}" class="flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white hover:bg-gold hover:text-black transition-all border border-white/20 text-sm font-bold">‹</button>
                 <button id="popup-next-${prop.id}" class="flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white hover:bg-gold hover:text-black transition-all border border-white/20 text-sm font-bold">›</button>
               </div>` : ''}
+            ${priceLabel ? `
             <div class="absolute bottom-3 left-3 right-3 flex items-baseline justify-between pointer-events-none">
               <span class="font-display text-2xl font-bold text-white drop-shadow">${priceLabel}</span>
-            </div>
+            </div>` : ''}
           </div>
           <div class="p-4 space-y-3">
             <div>
@@ -531,9 +535,9 @@ export function JapanPropertyMap() {
   };
 
   const selectedPriceLabel = selectedProperty
-    ? selectedProperty.priceEurAmount > 0
+    ? (selectedProperty.priceEurAmount && selectedProperty.priceEurAmount > 0)
       ? formatEur(selectedProperty.priceEurAmount)
-      : selectedProperty.price
+      : (selectedProperty.price || '')
     : '';
 
   const currentPropIdx = properties.findIndex((p) => p.id === selectedProperty?.id);
@@ -699,9 +703,15 @@ export function JapanPropertyMap() {
                       <Sparkles className="h-3 w-3" />
                       Active House Spotlight
                     </span>
-                    <span className="text-xs font-mono font-bold text-white bg-gold/20 px-2 py-0.5 rounded border border-gold/40">
-                      {selectedPriceLabel}
-                    </span>
+                    {selectedPriceLabel ? (
+                      <span className="text-xs font-mono font-bold text-white bg-gold/20 px-2 py-0.5 rounded border border-gold/40">
+                        {selectedPriceLabel}
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-mono font-semibold text-gold bg-gold/15 px-2.5 py-0.5 rounded border border-gold/40">
+                        Kōfu, Yamanashi
+                      </span>
+                    )}
                   </div>
 
                   {/* Image viewer */}
@@ -777,20 +787,22 @@ export function JapanPropertyMap() {
                   <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{selectedProperty.description}</p>
 
                   {/* Property nav */}
-                  <div className="flex gap-1.5 mb-3">
-                    <button
-                      onClick={() => navigateProperty('prev')}
-                      className="flex-1 flex items-center justify-center gap-1 rounded border border-border/60 bg-background/80 py-1.5 text-xs text-muted-foreground hover:text-gold hover:border-gold transition-colors"
-                    >
-                      <ChevronLeft className="h-3.5 w-3.5" /> Prev
-                    </button>
-                    <button
-                      onClick={() => navigateProperty('next')}
-                      className="flex-1 flex items-center justify-center gap-1 rounded border border-border/60 bg-background/80 py-1.5 text-xs text-muted-foreground hover:text-gold hover:border-gold transition-colors"
-                    >
-                      Next <ChevronRight className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                  {properties.length > 1 && (
+                    <div className="flex gap-1.5 mb-3">
+                      <button
+                        onClick={() => navigateProperty('prev')}
+                        className="flex-1 flex items-center justify-center gap-1 rounded border border-border/60 bg-background/80 py-1.5 text-xs text-muted-foreground hover:text-gold hover:border-gold transition-colors"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" /> Prev
+                      </button>
+                      <button
+                        onClick={() => navigateProperty('next')}
+                        className="flex-1 flex items-center justify-center gap-1 rounded border border-border/60 bg-background/80 py-1.5 text-xs text-muted-foreground hover:text-gold hover:border-gold transition-colors"
+                      >
+                        Next <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
 
                   <div className="flex gap-2">
                     <a
@@ -800,7 +812,7 @@ export function JapanPropertyMap() {
                       Inquire For This House
                     </a>
                     <a
-                      href="https://maps.app.goo.gl/9aRGHRgbNwCPK5rd7?g_st=iw"
+                      href={`https://www.google.com/maps/search/?api=1&query=${selectedProperty.coordinates[1]},${selectedProperty.coordinates[0]}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 rounded border border-border/60 bg-background/80 px-3 py-2 text-xs text-muted-foreground hover:text-gold hover:border-gold transition-colors"
@@ -816,7 +828,7 @@ export function JapanPropertyMap() {
               <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-1">
                 {properties.map((prop) => {
                   const isSelected = selectedProperty?.id === prop.id;
-                  const listPriceLabel = prop.priceEurAmount > 0 ? formatEur(prop.priceEurAmount) : prop.price;
+                  const listPriceLabel = (prop.priceEurAmount && prop.priceEurAmount > 0) ? formatEur(prop.priceEurAmount) : (prop.price || '');
                   return (
                     <div
                       key={prop.id}
@@ -841,7 +853,11 @@ export function JapanPropertyMap() {
                             <span className="truncate">{prop.location}</span>
                           </div>
                           <div className="mt-1 flex items-baseline justify-between">
-                            <span className="font-display text-sm font-bold text-gold">{listPriceLabel}</span>
+                            {listPriceLabel ? (
+                              <span className="font-display text-sm font-bold text-gold">{listPriceLabel}</span>
+                            ) : (
+                              <span className="text-xs text-gold/90 font-medium">Verified Property</span>
+                            )}
                             <span className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-0.5 group-hover:text-gold transition-colors">
                               Locate <ChevronRight className="h-3 w-3" />
                             </span>
